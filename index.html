@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>연성중 롤 내전</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>🎮 연성중 롤 내전</h1>
+        <p>Riot ID를 등록하세요.</p>
+    </header>
+
+
+    <main>
+
+        <section>
+            <h2>플레이어 등록</h2>
+
+            <label for="gameName">게임 닉네임</label>
+            <input
+                type="text"
+                id="gameName"
+                placeholder="예: 창개"
+            >
+
+            <label for="tagLine">태그</label>
+            <input
+                type="text"
+                id="tagLine"
+                placeholder="예: KR1"
+            >
+
+            <button id="addPlayerBtn">
+                플레이어 추가
+            </button>
+        </section>
+
+
+        <section>
+            <h2>참가자 목록</h2>
+
+            <ul id="playerList"></ul>
+        </section>
+
+
+        <section>
+            <h2>팀 생성</h2>
+
+            <button id="createTeamBtn">
+                🎲 밸런스 팀 만들기
+            </button>
+        </section>
+
+
+        <section>
+            <h2>팀 결과</h2>
+
+            <div>
+                <h3>🔵 BLUE TEAM</h3>
+                <ul id="blueTeam"></ul>
+            </div>
+
+            <div>
+                <h3>🔴 RED TEAM</h3>
+                <ul id="redTeam"></ul>
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <script src="script.js"></script>
+
+</body>
+</html>
