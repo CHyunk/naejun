@@ -1,16 +1,21 @@
 {
-  "name": "new-project",
+  "name": "naejun",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Riot ID와 솔로 랭크를 이용한 롤 내전 팀 밸런서",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js",
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "dependencies": {
+    "dotenv": "^17.2.2",
     "express": "^5.2.1"
   }
 }

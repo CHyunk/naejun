@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#15171a">
+    <title>연성중 롤 내전</title>
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+    <header class="app-header">
+        <div>
+            <p class="eyebrow">CUSTOM MATCH</p>
+            <h1>연성중 롤 내전</h1>
+        </div>
+        <div class="player-count" aria-live="polite">
+            <strong id="playerCount">0</strong>
+            <span>참가자</span>
+        </div>
+    </header>
+
+    <main>
+        <section class="registration" aria-labelledby="registrationTitle">
+            <div class="section-heading">
+                <div>
+                    <p class="step">01</p>
+                    <h2 id="registrationTitle">플레이어 등록</h2>
+                </div>
+                <p>한국 서버 솔로 랭크를 기준으로 계산합니다.</p>
+            </div>
+
+            <form id="playerForm">
+                <label>
+                    <span>게임 닉네임</span>
+                    <input id="gameName" name="gameName" type="text" maxlength="16" autocomplete="off" placeholder="예: Hide on bush" required>
+                </label>
+                <span class="hash" aria-hidden="true">#</span>
+                <label class="tag-field">
+                    <span>태그</span>
+                    <input id="tagLine" name="tagLine" type="text" maxlength="5" autocomplete="off" placeholder="KR1" required>
+                </label>
+                <button id="addPlayerBtn" class="primary-button" type="submit">
+                    <span class="button-label">추가</span>
+                    <span class="spinner" aria-hidden="true"></span>
+                </button>
+            </form>
+            <p id="formMessage" class="message" role="status" aria-live="polite"></p>
+        </section>
+
+        <section aria-labelledby="playersTitle">
+            <div class="section-heading compact">
+                <div>
+                    <p class="step">02</p>
+                    <h2 id="playersTitle">참가자</h2>
+                </div>
+                <button id="clearPlayersBtn" class="text-button" type="button">전체 삭제</button>
+            </div>
+            <ul id="playerList" class="player-list"></ul>
+            <p id="emptyPlayers" class="empty-state">Riot ID를 추가하면 여기에 티어와 점수가 표시됩니다.</p>
+        </section>
+
+        <section class="team-action" aria-labelledby="teamActionTitle">
+            <div>
+                <p class="step">03</p>
+                <h2 id="teamActionTitle">팀 편성</h2>
+                <p>동점 후보 중 하나를 무작위로 선택합니다.</p>
+            </div>
+            <button id="createTeamBtn" class="balance-button" type="button" disabled>밸런스 팀 만들기</button>
+        </section>
+
+        <section id="teamResults" class="team-results" aria-labelledby="resultsTitle" hidden>
+            <div class="section-heading compact">
+                <div>
+                    <p class="step">04</p>
+                    <h2 id="resultsTitle">팀 결과</h2>
+                </div>
+                <p id="balanceSummary" class="balance-summary"></p>
+            </div>
+            <div class="teams">
+                <article class="team blue-team">
+                    <header>
+                        <h3>Blue Team</h3>
+                        <strong id="blueScore">0점</strong>
+                    </header>
+                    <ul id="blueTeam"></ul>
+                </article>
+                <article class="team red-team">
+                    <header>
+                        <h3>Red Team</h3>
+                        <strong id="redScore">0점</strong>
+                    </header>
+                    <ul id="redTeam"></ul>
+                </article>
+            </div>
+        </section>
+    </main>
+
+    <footer>League of Legends and Riot Games are trademarks of Riot Games, Inc.</footer>
+    <script src="/balance.js"></script>
+    <script src="/script.js"></script>
+</body>
+</html>
