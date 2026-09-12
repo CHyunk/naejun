@@ -54,7 +54,9 @@ let currentTeams = null;
 function loadPlayers() {
     try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-        return Array.isArray(saved) ? saved : [];
+        return Array.isArray(saved)
+            ? saved.map((player) => ({ ...player, score: RankScore.rankedScore(player.rank) }))
+            : [];
     } catch {
         return [];
     }

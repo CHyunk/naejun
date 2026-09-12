@@ -2,6 +2,7 @@ require("dotenv").config({ quiet: true });
 
 const path = require("node:path");
 const express = require("express");
+const { rankedScore } = require("./public/rank-score");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -9,35 +10,8 @@ const RIOT_API_KEY = process.env.RIOT_API_KEY;
 const RIOT_PLATFORM = (process.env.RIOT_PLATFORM || "kr").toLowerCase();
 const RIOT_REGION = (process.env.RIOT_REGION || "asia").toLowerCase();
 
-const TIER_BASE_SCORE = {
-    IRON: 0,
-    BRONZE: 400,
-    SILVER: 800,
-    GOLD: 1200,
-    PLATINUM: 1600,
-    EMERALD: 2000,
-    DIAMOND: 2400,
-    MASTER: 2800,
-    GRANDMASTER: 3200,
-    CHALLENGER: 3600
-};
-
-const DIVISION_SCORE = { IV: 0, III: 100, II: 200, I: 300 };
-
 app.use(express.json({ limit: "10kb" }));
 app.use(express.static(path.join(__dirname, "public")));
-
-function rankedScore(entry) {
-    if (!entry) {
-        return 600;
-    }
-
-    return (
-        (TIER_BASE_SCORE[entry.tier] || 0) +
-        (DIVISION_SCORE[entry.rank] || 0) +
-        Math.max(0, Math.min(Number(entry.leaguePoints) || 0, 100))
-    );
-}
 
 async function riotFetch(url) {
     const response = await fetch(url, {
