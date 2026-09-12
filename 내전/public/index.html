@@ -69,7 +69,16 @@
                 <h2 id="teamActionTitle">팀 편성</h2>
                 <p>동점 후보 중 하나를 무작위로 선택합니다.</p>
             </div>
-            <button id="createTeamBtn" class="balance-button" type="button" disabled>밸런스 팀 만들기</button>
+            <div class="team-action-controls">
+                <label class="stake-field">
+                    <span>1인당 판돈</span>
+                    <span class="money-input">
+                        <input id="stakeInput" type="number" min="100" step="100" inputmode="numeric" value="1000">
+                        <span>원</span>
+                    </span>
+                </label>
+                <button id="createTeamBtn" class="balance-button" type="button" disabled>밸런스 팀 만들기</button>
+            </div>
         </section>
 
         <section id="teamResults" class="team-results" aria-labelledby="resultsTitle" hidden>
@@ -96,6 +105,58 @@
                     <ul id="redTeam"></ul>
                 </article>
             </div>
+            <div class="match-result-controls" aria-labelledby="winnerTitle">
+                <div>
+                    <h3 id="winnerTitle">승리 팀 기록</h3>
+                    <p id="matchMessage" class="message" role="status" aria-live="polite">경기가 끝나면 승리한 팀을 선택하세요.</p>
+                </div>
+                <div class="winner-buttons">
+                    <button id="blueWinBtn" class="winner-button blue-win" type="button">Blue 승리</button>
+                    <button id="redWinBtn" class="winner-button red-win" type="button">Red 승리</button>
+                </div>
+            </div>
+        </section>
+
+        <section class="money-section" aria-labelledby="moneyTitle">
+            <div class="section-heading compact money-heading">
+                <div>
+                    <p class="step">05</p>
+                    <h2 id="moneyTitle">판돈 정산</h2>
+                </div>
+                <div class="money-actions">
+                    <span id="matchCount" class="match-count">0경기</span>
+                    <button id="undoMatchBtn" class="text-button" type="button" disabled>마지막 기록 취소</button>
+                    <button id="clearMatchesBtn" class="text-button danger-text" type="button" disabled>정산 초기화</button>
+                </div>
+            </div>
+
+            <div id="moneyEmpty" class="empty-state">승패를 기록하면 개인별 손익과 송금할 금액이 계산됩니다.</div>
+
+            <div id="moneyDashboard" class="money-dashboard" hidden>
+                <div class="money-panel">
+                    <div class="panel-heading">
+                        <h3>개인별 누적</h3>
+                        <span>딴 돈 · 잃은 돈 · 순손익</span>
+                    </div>
+                    <ul id="ledgerList" class="ledger-list"></ul>
+                </div>
+
+                <div class="money-panel settlement-panel">
+                    <div class="panel-heading">
+                        <h3>최종 송금</h3>
+                        <span>누적 손익 기준</span>
+                    </div>
+                    <ul id="settlementList" class="settlement-list"></ul>
+                </div>
+            </div>
+
+            <div id="historyBlock" class="history-block" hidden>
+                <div class="panel-heading">
+                    <h3>경기 기록</h3>
+                    <span id="totalPot">총 이동 금액 0원</span>
+                </div>
+                <ol id="matchHistory" class="match-history"></ol>
+            </div>
         </section>
     </main>
 
@@ -104,6 +165,7 @@
         <span>Riot Games의 보증 또는 후원을 받지 않습니다.</span>
     </footer>
     <script src="/balance.js"></script>
+    <script src="/money.js"></script>
     <script src="/script.js"></script>
 </body>
 </html>

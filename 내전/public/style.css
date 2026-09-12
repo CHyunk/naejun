@@ -22,6 +22,10 @@
     box-sizing: border-box;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 html {
     background: var(--background);
 }
@@ -263,6 +267,7 @@ input:focus {
 
 .primary-button:focus-visible,
 .balance-button:focus-visible,
+.winner-button:focus-visible,
 .text-button:focus-visible,
 .delete-button:focus-visible {
     outline: 2px solid var(--gold-bright);
@@ -419,6 +424,36 @@ input:focus {
     margin-bottom: 0;
 }
 
+.team-action-controls {
+    display: grid;
+    grid-template-columns: 160px 210px;
+    align-items: end;
+    gap: 12px;
+}
+
+.stake-field {
+    min-width: 0;
+}
+
+.money-input {
+    position: relative;
+    display: block;
+}
+
+.money-input input {
+    padding-right: 38px;
+}
+
+.money-input > span {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+    color: var(--muted);
+    font-size: 0.8rem;
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
 .balance-button {
     min-width: 210px;
     padding: 0 24px;
@@ -486,6 +521,235 @@ input:focus {
 
 .team li:last-child {
     border-bottom: 0;
+}
+
+.match-result-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    margin-top: 20px;
+    padding: 22px 0 0;
+    border-top: 1px solid var(--line);
+}
+
+.match-result-controls h3,
+.panel-heading h3 {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+}
+
+.match-result-controls .message {
+    margin-top: 5px;
+}
+
+.winner-buttons {
+    display: grid;
+    grid-template-columns: repeat(2, 150px);
+    gap: 10px;
+}
+
+.winner-button {
+    height: 48px;
+    border: 1px solid;
+    border-radius: 3px;
+    background: var(--surface);
+    color: var(--text);
+    font-weight: 800;
+}
+
+.blue-win {
+    border-color: var(--blue);
+}
+
+.blue-win:hover:not(:disabled) {
+    background: rgba(75, 158, 232, 0.16);
+}
+
+.red-win {
+    border-color: var(--red);
+}
+
+.red-win:hover:not(:disabled) {
+    background: rgba(229, 93, 97, 0.16);
+}
+
+.money-heading {
+    align-items: flex-end;
+}
+
+.money-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px 16px;
+    flex-wrap: wrap;
+}
+
+.match-count {
+    padding: 5px 9px;
+    border: 1px solid var(--gold-muted);
+    border-radius: 3px;
+    color: #d8c793;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+.danger-text:hover:not(:disabled) {
+    color: var(--danger);
+}
+
+.money-dashboard {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+    gap: 28px;
+    margin-top: 28px;
+}
+
+.money-panel {
+    min-width: 0;
+    border-top: 2px solid var(--green);
+}
+
+.settlement-panel {
+    border-top-color: var(--gold);
+}
+
+.panel-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 52px;
+    border-bottom: 1px solid var(--line);
+}
+
+.panel-heading span {
+    color: var(--muted);
+    font-size: 0.74rem;
+}
+
+.ledger-list,
+.settlement-list,
+.match-history {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ledger-list li,
+.settlement-list li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 14px;
+    min-height: 68px;
+    padding: 11px 4px;
+    border-bottom: 1px solid var(--line);
+}
+
+.ledger-details {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+}
+
+.ledger-details strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ledger-details span {
+    color: var(--muted);
+    font-size: 0.75rem;
+}
+
+.net-amount,
+.settlement-amount {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.net-amount.profit {
+    color: var(--success);
+}
+
+.net-amount.loss {
+    color: var(--danger);
+}
+
+.net-amount.even {
+    color: var(--muted);
+}
+
+.settlement-route {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.settlement-route strong {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.settlement-route span {
+    color: var(--gold-bright);
+}
+
+.settlement-amount {
+    color: var(--gold-bright);
+}
+
+.settlement-list .settled-message {
+    display: block;
+    padding: 24px 4px;
+    color: var(--success);
+    font-size: 0.84rem;
+}
+
+.history-block {
+    margin-top: 38px;
+    border-top: 2px solid var(--line);
+}
+
+.match-history {
+    counter-reset: none;
+}
+
+.match-history li {
+    padding: 14px 4px;
+    border-bottom: 1px solid var(--line);
+}
+
+.history-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.history-summary span,
+.history-teams {
+    color: var(--muted);
+    font-size: 0.76rem;
+}
+
+.blue-result {
+    color: #72b9f5;
+}
+
+.red-result {
+    color: #f08084;
+}
+
+.history-teams {
+    margin: 5px 0 0;
+    overflow-wrap: anywhere;
 }
 
 footer {
@@ -572,7 +836,31 @@ footer {
         width: 100%;
     }
 
+    .team-action-controls {
+        grid-template-columns: 150px minmax(0, 1fr);
+        width: 100%;
+    }
+
     .teams {
+        grid-template-columns: 1fr;
+    }
+
+    .match-result-controls,
+    .section-heading.money-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .winner-buttons {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+    }
+
+    .money-actions {
+        justify-content: flex-start;
+    }
+
+    .money-dashboard {
         grid-template-columns: 1fr;
     }
 
@@ -602,5 +890,20 @@ footer {
 
     .player-count {
         right: 16px;
+    }
+
+    .team-action-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .history-summary {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    .ledger-list li,
+    .settlement-list li {
+        gap: 9px;
     }
 }
