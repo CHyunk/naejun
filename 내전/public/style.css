@@ -1,20 +1,29 @@
 :root {
     color-scheme: dark;
-    --background: #101214;
-    --surface: #191c20;
-    --line: #343a42;
-    --text: #f5f7f8;
-    --muted: #a3abb5;
-    --accent: #d7b354;
-    --accent-strong: #f0cf6b;
-    --blue: #4da3ff;
-    --red: #ff6b6b;
-    --success: #61c892;
-    --danger: #ff8585;
+    --background: #070b0a;
+    --surface: #111816;
+    --surface-raised: #17211e;
+    --green: #008b52;
+    --green-bright: #18b06b;
+    --green-deep: #061b18;
+    --gold: #c99b3c;
+    --gold-bright: #f0ca68;
+    --gold-muted: #7d642f;
+    --line: #293731;
+    --text: #f3f1e8;
+    --muted: #9ca9a2;
+    --blue: #4b9ee8;
+    --red: #e55d61;
+    --success: #5fd39a;
+    --danger: #ff8185;
 }
 
 * {
     box-sizing: border-box;
+}
+
+html {
+    background: var(--background);
 }
 
 body {
@@ -23,7 +32,7 @@ body {
     min-height: 100vh;
     background: var(--background);
     color: var(--text);
-    font-family: Pretendard, "Noto Sans KR", system-ui, sans-serif;
+    font-family: Pretendard, "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
     line-height: 1.5;
 }
 
@@ -38,27 +47,69 @@ button {
 
 button:disabled {
     cursor: not-allowed;
-    opacity: 0.45;
+    opacity: 0.42;
 }
 
 .app-header {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    min-height: 280px;
+    padding: 40px max(24px, calc((100% - 1040px) / 2));
+    overflow: hidden;
+    border-bottom: 1px solid var(--gold-muted);
+    background: var(--green-deep);
+}
+
+.app-header::before,
+.app-header::after {
+    position: absolute;
+    z-index: -1;
+    content: "";
+    pointer-events: none;
+}
+
+.app-header::before {
+    inset: 18px;
+    border: 1px solid rgba(201, 155, 60, 0.15);
+    clip-path: polygon(0 0, 72% 0, 78% 18%, 100% 18%, 100% 100%, 28% 100%, 22% 82%, 0 82%);
+}
+
+.app-header::after {
+    width: 430px;
+    height: 430px;
+    right: -190px;
+    bottom: -315px;
+    border: 1px solid rgba(24, 176, 107, 0.3);
+    border-radius: 50%;
+    box-shadow: 0 0 0 42px rgba(24, 176, 107, 0.035), 0 0 0 86px rgba(201, 155, 60, 0.025);
+}
+
+.brand-lockup {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    min-height: 220px;
-    padding: 48px max(24px, calc((100% - 960px) / 2));
-    border-bottom: 1px solid var(--line);
-    background-color: #15171a;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-    background-size: 32px 32px;
+    align-items: center;
+    gap: 28px;
+    min-width: 0;
+}
+
+.brand-emblem {
+    width: 142px;
+    height: 142px;
+    flex: 0 0 auto;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 24px rgba(0, 0, 0, 0.38));
+}
+
+.brand-copy {
+    min-width: 0;
 }
 
 .eyebrow,
 .step {
-    margin: 0 0 8px;
-    color: var(--accent);
+    margin: 0 0 9px;
+    color: var(--gold-bright);
     font-size: 0.75rem;
     font-weight: 800;
     letter-spacing: 0;
@@ -72,10 +123,12 @@ p {
 }
 
 h1 {
-    margin-bottom: 0;
-    font-size: clamp(2.25rem, 7vw, 4rem);
-    line-height: 1;
+    margin-bottom: 10px;
+    font-family: Georgia, "Times New Roman", "Noto Serif KR", serif;
+    font-size: 4rem;
+    line-height: 1.05;
     letter-spacing: 0;
+    text-wrap: balance;
 }
 
 h2 {
@@ -85,19 +138,27 @@ h2 {
 }
 
 .player-count {
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
+    display: grid;
+    justify-items: end;
+    min-width: 114px;
     color: var(--muted);
 }
 
 .player-count strong {
-    color: var(--text);
-    font-size: 2.5rem;
+    color: var(--gold-bright);
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 2.4rem;
+    line-height: 1;
+}
+
+.player-count span {
+    margin-top: 7px;
+    font-size: 0.76rem;
+    font-weight: 700;
 }
 
 main {
-    width: min(960px, calc(100% - 48px));
+    width: min(1040px, calc(100% - 48px));
     margin: 0 auto;
 }
 
@@ -118,16 +179,29 @@ section {
 .team-action p {
     margin-bottom: 3px;
     color: var(--muted);
-    font-size: 0.9rem;
+    font-size: 0.86rem;
 }
 
 .section-heading.compact {
     align-items: center;
 }
 
+.step {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.step::after {
+    width: 28px;
+    height: 1px;
+    background: var(--gold-muted);
+    content: "";
+}
+
 form {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto 180px 96px;
+    grid-template-columns: minmax(0, 1fr) auto 180px 104px;
     align-items: end;
     gap: 12px;
     margin-top: 28px;
@@ -143,40 +217,56 @@ label {
 
 input {
     width: 100%;
-    height: 48px;
-    padding: 0 14px;
+    height: 50px;
+    padding: 0 15px;
     border: 1px solid var(--line);
-    border-radius: 4px;
+    border-radius: 3px;
     outline: none;
     background: var(--surface);
     color: var(--text);
 }
 
+input::placeholder {
+    color: #68756f;
+}
+
+input:hover:not(:disabled) {
+    border-color: #3b4d45;
+}
+
 input:focus {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(215, 179, 84, 0.15);
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(201, 155, 60, 0.12);
 }
 
 .hash {
-    height: 48px;
-    color: var(--muted);
+    height: 50px;
+    color: var(--gold-muted);
     font-size: 1.25rem;
-    line-height: 48px;
+    line-height: 50px;
 }
 
 .primary-button,
 .balance-button {
-    height: 48px;
-    border: 0;
-    border-radius: 4px;
-    background: var(--accent);
-    color: #17130a;
-    font-weight: 800;
+    height: 50px;
+    border: 1px solid var(--gold-bright);
+    border-radius: 3px;
+    background: var(--gold);
+    color: #151005;
+    font-weight: 850;
 }
 
 .primary-button:hover:not(:disabled),
 .balance-button:hover:not(:disabled) {
-    background: var(--accent-strong);
+    background: var(--gold-bright);
+}
+
+.primary-button:focus-visible,
+.balance-button:focus-visible,
+.text-button:focus-visible,
+.delete-button:focus-visible {
+    outline: 2px solid var(--gold-bright);
+    outline-offset: 3px;
 }
 
 .spinner {
@@ -184,8 +274,8 @@ input:focus {
     width: 18px;
     height: 18px;
     margin: auto;
-    border: 2px solid rgba(23, 19, 10, 0.35);
-    border-top-color: #17130a;
+    border: 2px solid rgba(21, 16, 5, 0.3);
+    border-top-color: #151005;
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
 }
@@ -225,7 +315,7 @@ input:focus {
 
 .text-button:hover:not(:disabled),
 .delete-button:hover {
-    color: var(--text);
+    color: var(--gold-bright);
 }
 
 .player-list,
@@ -237,15 +327,20 @@ input:focus {
 
 .player-list li {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto 40px;
+    grid-template-columns: minmax(0, 1fr) auto 42px;
     align-items: center;
-    min-height: 68px;
-    padding: 10px 8px 10px 16px;
+    min-height: 70px;
+    padding: 10px 8px 10px 17px;
     border-top: 1px solid var(--line);
+    background: rgba(17, 24, 22, 0.48);
 }
 
 .player-list li:last-child {
     border-bottom: 1px solid var(--line);
+}
+
+.player-list li:hover {
+    background: var(--surface);
 }
 
 .player-details {
@@ -270,42 +365,54 @@ input:focus {
 
 .score {
     padding: 4px 9px;
-    border: 1px solid var(--line);
-    border-radius: 4px;
+    border: 1px solid var(--gold-muted);
+    border-radius: 3px;
+    color: #d8c793;
 }
 
 .tier-challenger,
 .tier-grandmaster,
 .tier-master {
-    color: #e88aff;
+    color: #e08cf1;
 }
 
 .tier-diamond,
 .tier-emerald {
-    color: #69d5c2;
+    color: #62d5c1;
 }
 
 .tier-platinum,
 .tier-gold {
-    color: var(--accent-strong);
+    color: var(--gold-bright);
 }
 
 .delete-button {
-    width: 40px;
-    height: 40px;
+    width: 42px;
+    height: 42px;
     font-size: 1.5rem;
 }
 
 .empty-state {
     margin: 24px 0 0;
-    padding: 28px 16px;
-    border: 1px dashed var(--line);
+    padding: 30px 16px;
+    border: 1px dashed #34473f;
     color: var(--muted);
     text-align: center;
 }
 
 .team-action {
+    position: relative;
     align-items: center;
+}
+
+.team-action::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -24px;
+    width: 3px;
+    background: var(--green);
+    content: "";
 }
 
 .team-action p:last-child {
@@ -313,14 +420,21 @@ input:focus {
 }
 
 .balance-button {
-    min-width: 200px;
-    padding: 0 22px;
+    min-width: 210px;
+    padding: 0 24px;
+    background: var(--green);
+    color: #f5fff9;
+}
+
+.balance-button:hover:not(:disabled) {
+    background: var(--green-bright);
 }
 
 .balance-summary {
     padding: 6px 10px;
-    border: 1px solid var(--line);
-    border-radius: 4px;
+    border: 1px solid var(--gold-muted);
+    border-radius: 3px;
+    color: #d8c793;
 }
 
 .teams {
@@ -333,6 +447,7 @@ input:focus {
 .team {
     border: 1px solid var(--line);
     border-top: 3px solid;
+    border-radius: 3px;
     background: var(--surface);
 }
 
@@ -354,7 +469,8 @@ input:focus {
 
 .team h3 {
     margin-bottom: 0;
-    font-size: 1rem;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.05rem;
 }
 
 .team ul {
@@ -373,17 +489,52 @@ input:focus {
 }
 
 footer {
-    width: min(960px, calc(100% - 48px));
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    width: min(1040px, calc(100% - 48px));
     margin: 0 auto;
     padding: 24px 0 40px;
-    color: #707882;
+    color: #63716a;
     font-size: 0.72rem;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 760px) {
     .app-header {
-        min-height: 180px;
-        padding: 32px 24px;
+        min-height: 220px;
+        padding: 26px 24px;
+    }
+
+    .brand-lockup {
+        align-items: flex-start;
+        gap: 14px;
+        padding-right: 26px;
+    }
+
+    .brand-emblem {
+        width: 84px;
+        height: 84px;
+    }
+
+    h1 {
+        margin-bottom: 6px;
+        font-size: 2.1rem;
+    }
+
+    .eyebrow {
+        margin-bottom: 5px;
+        font-size: 0.63rem;
+    }
+
+    .player-count {
+        position: absolute;
+        right: 24px;
+        bottom: 24px;
+        min-width: 0;
+    }
+
+    .player-count strong {
+        font-size: 1.65rem;
     }
 
     .player-count span {
@@ -392,11 +543,11 @@ footer {
 
     main,
     footer {
-        width: min(100% - 32px, 960px);
+        width: min(100% - 32px, 1040px);
     }
 
     section {
-        padding: 32px 0;
+        padding: 34px 0;
     }
 
     .section-heading,
@@ -423,5 +574,33 @@ footer {
 
     .teams {
         grid-template-columns: 1fr;
+    }
+
+    footer {
+        flex-direction: column;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 430px) {
+    .app-header {
+        padding-inline: 16px;
+    }
+
+    .brand-lockup {
+        gap: 11px;
+    }
+
+    .brand-emblem {
+        width: 72px;
+        height: 72px;
+    }
+
+    h1 {
+        font-size: 1.85rem;
+    }
+
+    .player-count {
+        right: 16px;
     }
 }
