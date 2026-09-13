@@ -2,8 +2,11 @@ const STORAGE_KEY = "naejun-players-v1";
 const MATCH_STORAGE_KEY = "naejun-matches-v1";
 const STAKE_STORAGE_KEY = "naejun-stake-v1";
 const SOLO_STORAGE_KEY = "naejun-solo-records-v1";
+const ACTIVE_ROOM_STORAGE_KEY = "naejun-active-room-v1";
+const ROOM_HOST_TOKENS_STORAGE_KEY = "naejun-room-host-tokens-v1";
 const MAX_PLAYERS = 10;
 const DEFAULT_STAKE = 1000;
+const ROOM_POLL_INTERVAL = 3000;
 const TIER_NAMES = {
     IRON: "아이언",
     BRONZE: "브론즈",
@@ -59,6 +62,17 @@ const clearMatchesBtn = document.getElementById("clearMatchesBtn");
 const soloEmpty = document.getElementById("soloEmpty");
 const soloList = document.getElementById("soloList");
 const clearSoloBtn = document.getElementById("clearSoloBtn");
+const roomDisconnected = document.getElementById("roomDisconnected");
+const roomConnected = document.getElementById("roomConnected");
+const createRoomBtn = document.getElementById("createRoomBtn");
+const joinRoomForm = document.getElementById("joinRoomForm");
+const roomCodeInput = document.getElementById("roomCodeInput");
+const activeRoomCode = document.getElementById("activeRoomCode");
+const roomRole = document.getElementById("roomRole");
+const roomSyncStatus = document.getElementById("roomSyncStatus");
+const copyRoomLinkBtn = document.getElementById("copyRoomLinkBtn");
+const leaveRoomBtn = document.getElementById("leaveRoomBtn");
+const roomMessage = document.getElementById("roomMessage");
 
 let players = loadPlayers();
 let matches = loadMatches();
@@ -66,6 +80,16 @@ let soloRecords = loadSoloRecords();
 let currentTeams = null;
 let teamMode = "auto";
 let manualSelections = { blue: [], red: [] };
+let activeRoom = null;
+let applyingRoomState = false;
+let roomPollTimer = null;
+let roomSaveTimer = null;
+let roomSaveInFlight = false;
+let roomSaveQueued = false;
+
+function canEditState() {
+    return !activeRoom || Boolean(activeRoom.hostToken);
+}
 
 function loadPlayers() {
     try {
@@ -111,15 +135,24 @@ function loadStake() {
 }
 
 function savePlayers() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+    if (!activeRoom) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(players));
+    }
+    scheduleRoomSave();
 }
 
 function saveMatches() {
-    localStorage.setItem(MATCH_STORAGE_KEY, JSON.stringify(matches));
+    if (!activeRoom) {
+        localStorage.setItem(MATCH_STORAGE_KEY, JSON.stringify(matches));
+    }
+    scheduleRoomSave();
 }
 
 function saveSoloRecords() {
-    localStorage.setItem(SOLO_STORAGE_KEY, JSON.stringify(soloRecords));
+    if (!activeRoom) {
+        localStorage.setItem(SOLO_STORAGE_KEY, JSON.stringify(soloRecords));
+    }
+    scheduleRoomSave();
 }
 
 function readStake() {
@@ -148,8 +181,8 @@ function formatBalance(amount) {
 }
 
 function setWinnerButtons(isReady) {
-    blueWinBtn.disabled = !isReady;
-    redWinBtn.disabled = !isReady;
+    blueWinBtn.disabled = !isReady || !canEditState();
+    redWinBtn.disabled = !isReady || !canEditState();
 }
 
 function clearTeams() {
@@ -158,6 +191,7 @@ function clearTeams() {
     blueTeam.replaceChildren();
     redTeam.replaceChildren();
     setWinnerButtons(false);
+    scheduleRoomSave();
 }
 
 function normalizeManualSelections() {
@@ -209,6 +243,7 @@ function createManualSlot(team, index) {
     });
 
     select.value = currentValue;
+    select.disabled = !canEditState();
     select.addEventListener("change", () => {
         manualSelections[team][index] = select.value;
         renderManualTeamBuilder();
@@ -242,7 +277,7 @@ function renderManualTeamBuilder() {
     const redCount = manualSelections.red.filter(Boolean).length;
     blueManualCount.textContent = `${blueCount} / ${teamSize}`;
     redManualCount.textContent = `${redCount} / ${teamSize}`;
-    confirmManualTeamBtn.disabled = !manualTeamsComplete();
+    confirmManualTeamBtn.disabled = !manualTeamsComplete() || !canEditState();
     manualTeamMessage.textContent = manualTeamsComplete()
         ? "모든 참가자를 배정했습니다."
         : `Blue와 Red에 ${teamSize}명씩 배정해 주세요.`;
@@ -283,6 +318,7 @@ function renderPlayers() {
         deleteButton.setAttribute("aria-label", `${player.riotId} 삭제`);
         deleteButton.title = "플레이어 삭제";
         deleteButton.textContent = "×";
+        deleteButton.disabled = !canEditState();
         deleteButton.addEventListener("click", () => {
             players = players.filter((candidate) => candidate.puuid !== player.puuid);
             savePlayers();
@@ -297,17 +333,18 @@ function renderPlayers() {
 
     playerCount.textContent = `${players.length} / ${MAX_PLAYERS}`;
     emptyPlayers.hidden = players.length > 0;
-    clearPlayersBtn.disabled = players.length === 0;
-    createTeamBtn.disabled = players.length < 2 || players.length % 2 !== 0;
+    clearPlayersBtn.disabled = players.length === 0 || !canEditState();
+    createTeamBtn.disabled = players.length < 2 || players.length % 2 !== 0 || !canEditState();
     renderManualTeamBuilder();
     renderSoloRecords();
 }
 
 function setLoading(isLoading) {
-    addPlayerBtn.disabled = isLoading;
+    const disabled = isLoading || !canEditState();
+    addPlayerBtn.disabled = disabled;
     addPlayerBtn.classList.toggle("loading", isLoading);
-    gameNameInput.disabled = isLoading;
-    tagLineInput.disabled = isLoading;
+    gameNameInput.disabled = disabled;
+    tagLineInput.disabled = disabled;
 }
 
 playerForm.addEventListener("submit", async (event) => {
@@ -383,7 +420,10 @@ stakeInput.addEventListener("change", () => {
         return;
     }
 
-    localStorage.setItem(STAKE_STORAGE_KEY, String(stake));
+    if (!activeRoom) {
+        localStorage.setItem(STAKE_STORAGE_KEY, String(stake));
+    }
+    scheduleRoomSave();
 });
 
 function renderTeam(list, members) {
@@ -404,7 +444,7 @@ function renderTeam(list, members) {
 function showTeamResult(result, isManual = false) {
     const stake = readStake();
 
-    currentTeams = result;
+    currentTeams = { ...result, isManual };
     renderTeam(blueTeam, result.blue);
     renderTeam(redTeam, result.red);
     blueScore.textContent = `${result.blueScore.toLocaleString()}점`;
@@ -416,7 +456,11 @@ function showTeamResult(result, isManual = false) {
         : `승리 팀을 선택하면 1인당 ${formatWon(stake)}으로 기록됩니다.`;
     setWinnerButtons(true);
     teamResults.hidden = false;
-    teamResults.scrollIntoView({ behavior: "smooth", block: "start" });
+    scheduleRoomSave();
+
+    if (!applyingRoomState) {
+        teamResults.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
 }
 
 createTeamBtn.addEventListener("click", () => {
@@ -485,7 +529,9 @@ function recordMatch(winner) {
         blue: snapshotTeam(currentTeams.blue),
         red: snapshotTeam(currentTeams.red)
     });
-    localStorage.setItem(STAKE_STORAGE_KEY, String(stake));
+    if (!activeRoom) {
+        localStorage.setItem(STAKE_STORAGE_KEY, String(stake));
+    }
     saveMatches();
     currentTeams = null;
     setWinnerButtons(false);
@@ -587,8 +633,8 @@ function renderMoney() {
     }, 0);
 
     matchCount.textContent = `${matches.length}경기`;
-    undoMatchBtn.disabled = !hasMatches;
-    clearMatchesBtn.disabled = !hasMatches;
+    undoMatchBtn.disabled = !hasMatches || !canEditState();
+    clearMatchesBtn.disabled = !hasMatches || !canEditState();
     moneyEmpty.hidden = hasMatches;
     moneyDashboard.hidden = !hasMatches;
     historyBlock.hidden = !hasMatches;
@@ -641,7 +687,7 @@ function recentSoloLabel(matches) {
 function renderSoloRecords() {
     soloList.replaceChildren();
     soloEmpty.hidden = players.length > 0;
-    clearSoloBtn.disabled = Object.keys(soloRecords).length === 0;
+    clearSoloBtn.disabled = Object.keys(soloRecords).length === 0 || !canEditState();
 
     players.forEach((player) => {
         const record = soloRecords[player.puuid] || null;
@@ -669,6 +715,7 @@ function renderSoloRecords() {
         syncButton.type = "button";
         syncButton.className = "solo-sync-button";
         syncButton.textContent = "전적 동기화";
+        syncButton.disabled = !canEditState();
         syncButton.addEventListener("click", () => syncSoloRecord(player, syncButton, status));
 
         identity.append(riotId, recent);
@@ -728,7 +775,374 @@ clearSoloBtn.addEventListener("click", () => {
     renderSoloRecords();
 });
 
+function normalizeRoomCode(value) {
+    return typeof value === "string"
+        ? value.toUpperCase().replace(/[^A-HJ-NP-Z2-9]/g, "").slice(0, 6)
+        : "";
+}
+
+function loadRoomHostTokens() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(ROOM_HOST_TOKENS_STORAGE_KEY));
+        return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    } catch {
+        return {};
+    }
+}
+
+function rememberRoomHostToken(code, token) {
+    const tokens = loadRoomHostTokens();
+    tokens[code] = token;
+    localStorage.setItem(ROOM_HOST_TOKENS_STORAGE_KEY, JSON.stringify(tokens));
+}
+
+function roomHostToken(code) {
+    return loadRoomHostTokens()[code] || "";
+}
+
+function sharedRoomState() {
+    return {
+        players,
+        matches,
+        soloRecords,
+        currentTeams,
+        stake: readStake() || DEFAULT_STAKE
+    };
+}
+
+function applyRoomPermissions() {
+    const editable = canEditState();
+    gameNameInput.disabled = !editable;
+    tagLineInput.disabled = !editable;
+    addPlayerBtn.disabled = !editable;
+    clearPlayersBtn.disabled = players.length === 0 || !editable;
+    autoModeBtn.disabled = !editable;
+    manualModeBtn.disabled = !editable;
+    stakeInput.disabled = !editable;
+    createTeamBtn.disabled = players.length < 2 || players.length % 2 !== 0 || !editable;
+    confirmManualTeamBtn.disabled = !manualTeamsComplete() || !editable;
+    setWinnerButtons(Boolean(currentTeams));
+}
+
+function renderRoomControls() {
+    const connected = Boolean(activeRoom);
+    roomDisconnected.hidden = connected;
+    roomConnected.hidden = !connected;
+
+    if (connected) {
+        const isHost = Boolean(activeRoom.hostToken);
+        activeRoomCode.textContent = activeRoom.code;
+        roomRole.textContent = isHost ? "방장" : "관전자";
+        roomRole.classList.toggle("viewer", !isHost);
+        roomSyncStatus.textContent = isHost ? "변경 내용 자동 저장" : "방 기록 자동 새로고침";
+    }
+
+    applyRoomPermissions();
+}
+
+function updateRoomAddress(code) {
+    const url = new URL(window.location.href);
+
+    if (code) {
+        url.searchParams.set("room", code);
+    } else {
+        url.searchParams.delete("room");
+    }
+
+    window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function applySharedRoomState(state) {
+    applyingRoomState = true;
+    players = Array.isArray(state?.players)
+        ? state.players.slice(0, MAX_PLAYERS).map((player) => ({
+            ...player,
+            score: RankScore.rankedScore(player.rank)
+        }))
+        : [];
+    matches = Array.isArray(state?.matches) ? state.matches.filter(isValidMatch) : [];
+    soloRecords = state?.soloRecords && typeof state.soloRecords === "object" && !Array.isArray(state.soloRecords)
+        ? state.soloRecords
+        : {};
+    currentTeams = state?.currentTeams
+        && Array.isArray(state.currentTeams.blue)
+        && Array.isArray(state.currentTeams.red)
+        ? state.currentTeams
+        : null;
+    manualSelections = { blue: [], red: [] };
+    stakeInput.value = String(
+        Number.isSafeInteger(state?.stake) && state.stake >= 100 ? state.stake : DEFAULT_STAKE
+    );
+
+    renderPlayers();
+    renderMoney();
+
+    if (currentTeams) {
+        showTeamResult(currentTeams, Boolean(currentTeams.isManual));
+    } else {
+        clearTeams();
+    }
+
+    applyingRoomState = false;
+    renderRoomControls();
+}
+
+function stopRoomPolling() {
+    if (roomPollTimer) {
+        window.clearInterval(roomPollTimer);
+        roomPollTimer = null;
+    }
+}
+
+function startRoomPolling() {
+    stopRoomPolling();
+    roomPollTimer = window.setInterval(pollRoom, ROOM_POLL_INTERVAL);
+}
+
+async function pollRoom() {
+    if (!activeRoom || roomSaveTimer || roomSaveInFlight) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/rooms/${encodeURIComponent(activeRoom.code)}`, {
+            cache: "no-store"
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "방 상태를 불러오지 못했습니다.");
+        }
+
+        if (data.revision > activeRoom.revision) {
+            activeRoom.revision = data.revision;
+            applySharedRoomState(data.state);
+            roomSyncStatus.textContent = "방 기록 새로고침 완료";
+        }
+    } catch (error) {
+        roomSyncStatus.textContent = "연결 확인 중";
+        roomMessage.textContent = error.message;
+        roomMessage.className = "message room-message error";
+    }
+}
+
+function scheduleRoomSave() {
+    if (!activeRoom?.hostToken || applyingRoomState) {
+        return;
+    }
+
+    if (roomSaveInFlight) {
+        roomSaveQueued = true;
+        return;
+    }
+
+    if (roomSaveTimer) {
+        window.clearTimeout(roomSaveTimer);
+    }
+
+    roomSyncStatus.textContent = "저장 중";
+    roomSaveTimer = window.setTimeout(flushRoomSave, 300);
+}
+
+async function flushRoomSave() {
+    if (!activeRoom?.hostToken) {
+        return;
+    }
+
+    roomSaveTimer = null;
+    roomSaveInFlight = true;
+    const roomCode = activeRoom.code;
+    const hostToken = activeRoom.hostToken;
+
+    try {
+        const response = await fetch(`/api/rooms/${encodeURIComponent(roomCode)}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${hostToken}`
+            },
+            body: JSON.stringify({
+                state: sharedRoomState(),
+                expectedRevision: activeRoom.revision
+            })
+        });
+        const data = await response.json();
+
+        if (activeRoom?.code !== roomCode) {
+            return;
+        }
+
+        if (response.status === 409 && data.state) {
+            activeRoom.revision = data.revision;
+            applySharedRoomState(data.state);
+            roomMessage.textContent = data.message;
+            roomMessage.className = "message room-message error";
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(data.message || "방 기록을 저장하지 못했습니다.");
+        }
+
+        activeRoom.revision = data.revision;
+        roomSyncStatus.textContent = "저장됨";
+    } catch (error) {
+        roomSyncStatus.textContent = "저장 실패";
+        roomMessage.textContent = error.message;
+        roomMessage.className = "message room-message error";
+    } finally {
+        roomSaveInFlight = false;
+
+        if (roomSaveQueued) {
+            roomSaveQueued = false;
+            scheduleRoomSave();
+        }
+    }
+}
+
+function connectToRoom(data, hostToken = "") {
+    activeRoom = {
+        code: data.code,
+        revision: data.revision,
+        hostToken
+    };
+    localStorage.setItem(ACTIVE_ROOM_STORAGE_KEY, data.code);
+    updateRoomAddress(data.code);
+    applySharedRoomState(data.state);
+    startRoomPolling();
+}
+
+async function joinRoom(code, quiet = false) {
+    const normalizedCode = normalizeRoomCode(code);
+
+    if (normalizedCode.length !== 6) {
+        if (!quiet) {
+            roomMessage.textContent = "6자리 방 코드를 입력해 주세요.";
+            roomMessage.className = "message room-message error";
+        }
+        return;
+    }
+
+    createRoomBtn.disabled = true;
+    roomCodeInput.disabled = true;
+    joinRoomForm.querySelector("button").disabled = true;
+
+    try {
+        const response = await fetch(`/api/rooms/${encodeURIComponent(normalizedCode)}`, {
+            cache: "no-store"
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "방을 찾지 못했습니다.");
+        }
+
+        const hostToken = roomHostToken(data.code);
+        connectToRoom(data, hostToken);
+        roomMessage.textContent = hostToken
+            ? "방장으로 다시 연결했습니다."
+            : "방에 입장했습니다. 방장의 변경 내용이 자동으로 표시됩니다.";
+        roomMessage.className = "message room-message success";
+    } catch (error) {
+        localStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
+        updateRoomAddress("");
+        roomMessage.textContent = error.message;
+        roomMessage.className = "message room-message error";
+    } finally {
+        createRoomBtn.disabled = false;
+        roomCodeInput.disabled = false;
+        joinRoomForm.querySelector("button").disabled = false;
+    }
+}
+
+createRoomBtn.addEventListener("click", async () => {
+    createRoomBtn.disabled = true;
+    roomMessage.textContent = "새 방을 만들고 있습니다.";
+    roomMessage.className = "message room-message";
+
+    try {
+        const response = await fetch("/api/rooms", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ state: sharedRoomState() })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "방을 만들지 못했습니다.");
+        }
+
+        rememberRoomHostToken(data.code, data.hostToken);
+        connectToRoom(data, data.hostToken);
+        roomMessage.textContent = "방이 만들어졌습니다. 초대 링크를 친구들에게 보내세요.";
+        roomMessage.className = "message room-message success";
+    } catch (error) {
+        roomMessage.textContent = error.message;
+        roomMessage.className = "message room-message error";
+    } finally {
+        createRoomBtn.disabled = false;
+    }
+});
+
+joinRoomForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    joinRoom(roomCodeInput.value);
+});
+
+roomCodeInput.addEventListener("input", () => {
+    roomCodeInput.value = normalizeRoomCode(roomCodeInput.value);
+});
+
+copyRoomLinkBtn.addEventListener("click", async () => {
+    if (!activeRoom) {
+        return;
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.set("room", activeRoom.code);
+
+    try {
+        await navigator.clipboard.writeText(url.toString());
+        roomMessage.textContent = "초대 링크를 복사했습니다.";
+        roomMessage.className = "message room-message success";
+    } catch {
+        roomMessage.textContent = `방 코드 ${activeRoom.code}를 친구에게 알려주세요.`;
+        roomMessage.className = "message room-message";
+    }
+});
+
+leaveRoomBtn.addEventListener("click", () => {
+    stopRoomPolling();
+    activeRoom = null;
+    localStorage.removeItem(ACTIVE_ROOM_STORAGE_KEY);
+    updateRoomAddress("");
+    players = loadPlayers();
+    matches = loadMatches();
+    soloRecords = loadSoloRecords();
+    currentTeams = null;
+    manualSelections = { blue: [], red: [] };
+    stakeInput.value = String(loadStake());
+    renderPlayers();
+    renderMoney();
+    clearTeams();
+    renderRoomControls();
+    roomMessage.textContent = "공유방에서 나왔습니다.";
+    roomMessage.className = "message room-message";
+});
+
+function restoreActiveRoom() {
+    const roomFromAddress = normalizeRoomCode(new URLSearchParams(window.location.search).get("room"));
+    const savedRoom = normalizeRoomCode(localStorage.getItem(ACTIVE_ROOM_STORAGE_KEY));
+    const code = roomFromAddress || savedRoom;
+
+    if (code) {
+        joinRoom(code, true);
+    }
+}
+
 stakeInput.value = String(loadStake());
 setWinnerButtons(false);
 renderPlayers();
 renderMoney();
+renderRoomControls();
+restoreActiveRoom();

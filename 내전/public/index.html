@@ -24,6 +24,40 @@
     </header>
 
     <main>
+        <section class="room-control" aria-labelledby="roomTitle">
+            <div class="room-control-heading">
+                <div>
+                    <p class="step">ROOM</p>
+                    <h2 id="roomTitle">같이 쓰는 내전방</h2>
+                </div>
+                <p>방 코드를 공유하면 같은 기록을 함께 볼 수 있습니다.</p>
+            </div>
+
+            <div id="roomDisconnected" class="room-disconnected">
+                <button id="createRoomBtn" class="balance-button" type="button">새 방 만들기</button>
+                <span class="room-divider">또는</span>
+                <form id="joinRoomForm" class="join-room-form">
+                    <label>
+                        <span>방 코드</span>
+                        <input id="roomCodeInput" type="text" maxlength="6" autocomplete="off" autocapitalize="characters" placeholder="ABC234" required>
+                    </label>
+                    <button class="room-join-button" type="submit">입장</button>
+                </form>
+            </div>
+
+            <div id="roomConnected" class="room-connected" hidden>
+                <div class="room-code-badge">
+                    <span>방 코드</span>
+                    <strong id="activeRoomCode">------</strong>
+                </div>
+                <strong id="roomRole" class="room-role">관전자</strong>
+                <span id="roomSyncStatus" class="room-sync-status" role="status" aria-live="polite">연결됨</span>
+                <button id="copyRoomLinkBtn" class="room-utility-button" type="button">초대 링크 복사</button>
+                <button id="leaveRoomBtn" class="room-utility-button" type="button">나가기</button>
+            </div>
+            <p id="roomMessage" class="message room-message" role="status" aria-live="polite"></p>
+        </section>
+
         <section class="registration" aria-labelledby="registrationTitle">
             <div class="section-heading">
                 <div>

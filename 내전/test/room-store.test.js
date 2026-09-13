@@ -1,0 +1,46 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const { RoomStore, normalizeRoomState } = require("../room-store");
+
+const initialState = {
+    players: [{ puuid: "one", riotId: "나#KR1" }],
+    matches: [],
+    soloRecords: {},
+    currentTeams: null,
+    stake: 1000
+};
+
+test("creates a room with a share code and private host token", () => {
+    const store = new RoomStore();
+    const created = store.create(initialState);
+
+    assert.equal(created.status, 201);
+    assert.match(created.room.code, /^[A-HJ-NP-Z2-9]{6}$/);
+    assert.ok(created.hostToken.length >= 24);
+    assert.deepEqual(store.get(created.room.code.toLowerCase()).room.state, initialState);
+});
+
+test("only the host can update a room and revisions prevent stale writes", () => {
+    const store = new RoomStore();
+    const created = store.create(initialState);
+    const forbidden = store.update(created.room.code, "wrong-token", initialState, 1);
+    const updatedState = { ...initialState, stake: 2000 };
+    const updated = store.update(created.room.code, created.hostToken, updatedState, 1);
+    const stale = store.update(created.room.code, created.hostToken, initialState, 1);
+
+    assert.equal(forbidden.status, 403);
+    assert.equal(updated.status, 200);
+    assert.equal(updated.room.revision, 2);
+    assert.equal(updated.room.state.stake, 2000);
+    assert.equal(stale.status, 409);
+    assert.equal(stale.room.revision, 2);
+});
+
+test("normalizes shared state and rejects oversized payloads", () => {
+    const normalized = normalizeRoomState({ players: Array.from({ length: 12 }, (_, id) => ({ id })) });
+    const oversized = normalizeRoomState({ soloRecords: { value: "x".repeat(100 * 1024) } });
+
+    assert.equal(normalized.players.length, 10);
+    assert.equal(normalized.stake, 1000);
+    assert.equal(oversized, null);
+});

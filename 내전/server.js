@@ -3,15 +3,52 @@ require("dotenv").config({ quiet: true });
 const path = require("node:path");
 const express = require("express");
 const { rankedScore } = require("./public/rank-score");
+const { RoomStore } = require("./room-store");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 const RIOT_PLATFORM = (process.env.RIOT_PLATFORM || "kr").toLowerCase();
 const RIOT_REGION = (process.env.RIOT_REGION || "asia").toLowerCase();
+const roomStore = new RoomStore();
 
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json({ limit: "100kb" }));
 app.use(express.static(path.join(__dirname, "public")));
+
+app.post("/api/rooms", function (req, res) {
+    const result = roomStore.create(req.body?.state);
+
+    if (!result.room) {
+        return res.status(result.status).json({ message: result.message });
+    }
+
+    return res.status(result.status).json({ ...result.room, hostToken: result.hostToken });
+});
+
+app.get("/api/rooms/:code", function (req, res) {
+    const result = roomStore.get(req.params.code);
+
+    return result.room
+        ? res.json(result.room)
+        : res.status(result.status).json({ message: result.message });
+});
+
+app.put("/api/rooms/:code", function (req, res) {
+    const authorization = req.get("authorization") || "";
+    const hostToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+    const result = roomStore.update(
+        req.params.code,
+        hostToken,
+        req.body?.state,
+        req.body?.expectedRevision
+    );
+
+    if (!result.room || result.status === 403 || result.status === 400) {
+        return res.status(result.status).json({ message: result.message });
+    }
+
+    return res.status(result.status).json({ ...result.room, message: result.message });
+});
 
 async function riotFetch(url) {
     const response = await fetch(url, {
