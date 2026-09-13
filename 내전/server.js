@@ -97,6 +97,54 @@ app.post("/api/player", async function (req, res) {
     }
 });
 
+app.post("/api/solo-record", async function (req, res) {
+    const puuid = typeof req.body?.puuid === "string" ? req.body.puuid.trim() : "";
+
+    if (!puuid || puuid.length > 128) {
+        return res.status(400).json({ message: "올바른 플레이어 정보가 필요합니다." });
+    }
+
+    if (!RIOT_API_KEY) {
+        return res.status(503).json({ message: "서버에 RIOT_API_KEY가 설정되지 않았습니다." });
+    }
+
+    try {
+        const matchIdsUrl =
+            `https://${RIOT_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/` +
+            `${encodeURIComponent(puuid)}/ids?queue=420&start=0&count=10`;
+        const matchIds = await riotFetch(matchIdsUrl);
+        const details = await Promise.all(
+            matchIds.map((matchId) => {
+                const matchUrl =
+                    `https://${RIOT_REGION}.api.riotgames.com/lol/match/v5/matches/` +
+                    encodeURIComponent(matchId);
+                return riotFetch(matchUrl);
+            })
+        );
+        const matches = details.flatMap((match, index) => {
+            const participant = match.info?.participants?.find((entry) => entry.puuid === puuid);
+
+            if (!participant || match.info?.queueId !== 420) {
+                return [];
+            }
+
+            return [{
+                matchId: match.metadata?.matchId || matchIds[index],
+                win: Boolean(participant.win),
+                championName: participant.championName || "",
+                kills: Number(participant.kills) || 0,
+                deaths: Number(participant.deaths) || 0,
+                assists: Number(participant.assists) || 0,
+                gameEndTimestamp: Number(match.info.gameEndTimestamp || match.info.gameCreation) || 0
+            }];
+        });
+
+        return res.json({ matches });
+    } catch (error) {
+        return riotErrorResponse(error, res);
+    }
+});
+
 app.listen(PORT, function () {
     console.log(`서버 실행 중: http://localhost:${PORT}`);
 });

@@ -1,6 +1,7 @@
 const STORAGE_KEY = "naejun-players-v1";
 const MATCH_STORAGE_KEY = "naejun-matches-v1";
 const STAKE_STORAGE_KEY = "naejun-stake-v1";
+const SOLO_STORAGE_KEY = "naejun-solo-records-v1";
 const MAX_PLAYERS = 10;
 const DEFAULT_STAKE = 1000;
 const TIER_NAMES = {
@@ -22,6 +23,15 @@ const tagLineInput = document.getElementById("tagLine");
 const addPlayerBtn = document.getElementById("addPlayerBtn");
 const clearPlayersBtn = document.getElementById("clearPlayersBtn");
 const createTeamBtn = document.getElementById("createTeamBtn");
+const autoModeBtn = document.getElementById("autoModeBtn");
+const manualModeBtn = document.getElementById("manualModeBtn");
+const manualTeamBuilder = document.getElementById("manualTeamBuilder");
+const blueManualSlots = document.getElementById("blueManualSlots");
+const redManualSlots = document.getElementById("redManualSlots");
+const blueManualCount = document.getElementById("blueManualCount");
+const redManualCount = document.getElementById("redManualCount");
+const confirmManualTeamBtn = document.getElementById("confirmManualTeamBtn");
+const manualTeamMessage = document.getElementById("manualTeamMessage");
 const stakeInput = document.getElementById("stakeInput");
 const playerList = document.getElementById("playerList");
 const playerCount = document.getElementById("playerCount");
@@ -46,10 +56,16 @@ const historyBlock = document.getElementById("historyBlock");
 const matchHistory = document.getElementById("matchHistory");
 const undoMatchBtn = document.getElementById("undoMatchBtn");
 const clearMatchesBtn = document.getElementById("clearMatchesBtn");
+const soloEmpty = document.getElementById("soloEmpty");
+const soloList = document.getElementById("soloList");
+const clearSoloBtn = document.getElementById("clearSoloBtn");
 
 let players = loadPlayers();
 let matches = loadMatches();
+let soloRecords = loadSoloRecords();
 let currentTeams = null;
+let teamMode = "auto";
+let manualSelections = { blue: [], red: [] };
 
 function loadPlayers() {
     try {
@@ -68,6 +84,15 @@ function loadMatches() {
         return Array.isArray(saved) ? saved.filter(isValidMatch) : [];
     } catch {
         return [];
+    }
+}
+
+function loadSoloRecords() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(SOLO_STORAGE_KEY));
+        return saved && typeof saved === "object" && !Array.isArray(saved) ? saved : {};
+    } catch {
+        return {};
     }
 }
 
@@ -91,6 +116,10 @@ function savePlayers() {
 
 function saveMatches() {
     localStorage.setItem(MATCH_STORAGE_KEY, JSON.stringify(matches));
+}
+
+function saveSoloRecords() {
+    localStorage.setItem(SOLO_STORAGE_KEY, JSON.stringify(soloRecords));
 }
 
 function readStake() {
@@ -131,6 +160,107 @@ function clearTeams() {
     setWinnerButtons(false);
 }
 
+function normalizeManualSelections() {
+    const teamSize = players.length >= 2 && players.length % 2 === 0 ? players.length / 2 : 0;
+    const playerIds = new Set(players.map((player) => player.puuid));
+    const used = new Set();
+
+    for (const team of ["blue", "red"]) {
+        const previous = Array.isArray(manualSelections[team]) ? manualSelections[team] : [];
+        manualSelections[team] = Array.from({ length: teamSize }, (_, index) => {
+            const puuid = previous[index] || "";
+
+            if (!puuid || !playerIds.has(puuid) || used.has(puuid)) {
+                return "";
+            }
+
+            used.add(puuid);
+            return puuid;
+        });
+    }
+}
+
+function manualTeamsComplete() {
+    const selected = [...manualSelections.blue, ...manualSelections.red].filter(Boolean);
+    return selected.length === players.length && new Set(selected).size === players.length;
+}
+
+function createManualSlot(team, index) {
+    const label = document.createElement("label");
+    const slotName = document.createElement("span");
+    const select = document.createElement("select");
+    const emptyOption = document.createElement("option");
+    const currentValue = manualSelections[team][index];
+    const selectedIds = new Set([...manualSelections.blue, ...manualSelections.red].filter(Boolean));
+
+    label.className = "team-slot";
+    slotName.textContent = `${index + 1}번`;
+    select.setAttribute("aria-label", `${team === "blue" ? "Blue" : "Red"} Team ${index + 1}번 플레이어`);
+    emptyOption.value = "";
+    emptyOption.textContent = "참가자 선택";
+    select.appendChild(emptyOption);
+
+    players.forEach((player) => {
+        const option = document.createElement("option");
+        option.value = player.puuid;
+        option.textContent = `${player.riotId} · ${player.score.toLocaleString()}점`;
+        option.disabled = selectedIds.has(player.puuid) && player.puuid !== currentValue;
+        select.appendChild(option);
+    });
+
+    select.value = currentValue;
+    select.addEventListener("change", () => {
+        manualSelections[team][index] = select.value;
+        renderManualTeamBuilder();
+    });
+    label.append(slotName, select);
+    return label;
+}
+
+function renderManualTeamBuilder() {
+    manualTeamBuilder.hidden = teamMode !== "manual";
+    blueManualSlots.replaceChildren();
+    redManualSlots.replaceChildren();
+    manualTeamMessage.className = "message";
+    normalizeManualSelections();
+
+    const teamSize = manualSelections.blue.length;
+    const validPlayerCount = teamSize > 0;
+
+    if (!validPlayerCount) {
+        blueManualCount.textContent = "0 / 0";
+        redManualCount.textContent = "0 / 0";
+        confirmManualTeamBtn.disabled = true;
+        manualTeamMessage.textContent = "짝수 인원의 참가자를 먼저 등록해 주세요.";
+        return;
+    }
+
+    manualSelections.blue.forEach((_, index) => blueManualSlots.appendChild(createManualSlot("blue", index)));
+    manualSelections.red.forEach((_, index) => redManualSlots.appendChild(createManualSlot("red", index)));
+
+    const blueCount = manualSelections.blue.filter(Boolean).length;
+    const redCount = manualSelections.red.filter(Boolean).length;
+    blueManualCount.textContent = `${blueCount} / ${teamSize}`;
+    redManualCount.textContent = `${redCount} / ${teamSize}`;
+    confirmManualTeamBtn.disabled = !manualTeamsComplete();
+    manualTeamMessage.textContent = manualTeamsComplete()
+        ? "모든 참가자를 배정했습니다."
+        : `Blue와 Red에 ${teamSize}명씩 배정해 주세요.`;
+}
+
+function setTeamMode(mode) {
+    teamMode = mode;
+    const isAuto = mode === "auto";
+
+    autoModeBtn.classList.toggle("active", isAuto);
+    manualModeBtn.classList.toggle("active", !isAuto);
+    autoModeBtn.setAttribute("aria-pressed", String(isAuto));
+    manualModeBtn.setAttribute("aria-pressed", String(!isAuto));
+    createTeamBtn.hidden = !isAuto;
+    clearTeams();
+    renderManualTeamBuilder();
+}
+
 function renderPlayers() {
     playerList.replaceChildren();
 
@@ -169,6 +299,8 @@ function renderPlayers() {
     emptyPlayers.hidden = players.length > 0;
     clearPlayersBtn.disabled = players.length === 0;
     createTeamBtn.disabled = players.length < 2 || players.length % 2 !== 0;
+    renderManualTeamBuilder();
+    renderSoloRecords();
 }
 
 function setLoading(isLoading) {
@@ -240,6 +372,9 @@ clearPlayersBtn.addEventListener("click", () => {
     renderPlayers();
 });
 
+autoModeBtn.addEventListener("click", () => setTeamMode("auto"));
+manualModeBtn.addEventListener("click", () => setTeamMode("manual"));
+
 stakeInput.addEventListener("change", () => {
     const stake = readStake();
 
@@ -266,8 +401,7 @@ function renderTeam(list, members) {
     });
 }
 
-createTeamBtn.addEventListener("click", () => {
-    const result = TeamBalancer.createBalancedTeams(players);
+function showTeamResult(result, isManual = false) {
     const stake = readStake();
 
     currentTeams = result;
@@ -275,7 +409,7 @@ createTeamBtn.addEventListener("click", () => {
     renderTeam(redTeam, result.red);
     blueScore.textContent = `${result.blueScore.toLocaleString()}점`;
     redScore.textContent = `${result.redScore.toLocaleString()}점`;
-    balanceSummary.textContent = `점수 차 ${result.difference.toLocaleString()}`;
+    balanceSummary.textContent = `${isManual ? "직접 편성 · " : ""}점수 차 ${result.difference.toLocaleString()}`;
     matchMessage.className = "message";
     matchMessage.textContent = stake === null
         ? "판돈을 100원 이상 정수로 입력한 뒤 승리 팀을 선택하세요."
@@ -283,6 +417,34 @@ createTeamBtn.addEventListener("click", () => {
     setWinnerButtons(true);
     teamResults.hidden = false;
     teamResults.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+createTeamBtn.addEventListener("click", () => {
+    const result = TeamBalancer.createBalancedTeams(players);
+
+    showTeamResult(result);
+});
+
+confirmManualTeamBtn.addEventListener("click", () => {
+    if (!manualTeamsComplete()) {
+        manualTeamMessage.textContent = "모든 참가자를 한 번씩 배정해 주세요.";
+        manualTeamMessage.classList.add("error");
+        return;
+    }
+
+    const playerById = new Map(players.map((player) => [player.puuid, player]));
+    const blue = manualSelections.blue.map((puuid) => playerById.get(puuid));
+    const red = manualSelections.red.map((puuid) => playerById.get(puuid));
+    const blueTeamScore = blue.reduce((sum, player) => sum + player.score, 0);
+    const redTeamScore = red.reduce((sum, player) => sum + player.score, 0);
+
+    showTeamResult({
+        blue,
+        red,
+        blueScore: blueTeamScore,
+        redScore: redTeamScore,
+        difference: Math.abs(blueTeamScore - redTeamScore)
+    }, true);
 });
 
 function matchId() {
@@ -458,6 +620,107 @@ clearMatchesBtn.addEventListener("click", () => {
     matches = [];
     saveMatches();
     renderMoney();
+});
+
+function formatSoloScore(score) {
+    return score > 0 ? `+${score}` : String(score);
+}
+
+function recentSoloLabel(matches) {
+    if (!Array.isArray(matches) || matches.length === 0) {
+        return "최근 전적 없음";
+    }
+
+    return matches.map((match) => match.win ? "승" : "패").join(" · ");
+}
+
+function renderSoloRecords() {
+    soloList.replaceChildren();
+    soloEmpty.hidden = players.length > 0;
+    clearSoloBtn.disabled = Object.keys(soloRecords).length === 0;
+
+    players.forEach((player) => {
+        const record = soloRecords[player.puuid] || null;
+        const item = document.createElement("li");
+        const identity = document.createElement("div");
+        const riotId = document.createElement("strong");
+        const recent = document.createElement("span");
+        const stats = document.createElement("div");
+        const score = document.createElement("strong");
+        const recordText = document.createElement("span");
+        const sync = document.createElement("div");
+        const status = document.createElement("span");
+        const syncButton = document.createElement("button");
+
+        identity.className = "solo-identity";
+        riotId.textContent = player.riotId;
+        recent.textContent = record ? recentSoloLabel(record.recentMatches) : "아직 불러오지 않음";
+        stats.className = "solo-stats";
+        score.className = `solo-score ${record?.score > 0 ? "positive" : record?.score < 0 ? "negative" : "neutral"}`;
+        score.textContent = formatSoloScore(record?.score || 0);
+        recordText.textContent = `${record?.wins || 0}승 ${record?.losses || 0}패`;
+        sync.className = "solo-sync";
+        status.className = "solo-sync-status";
+        status.textContent = record?.syncMessage || "";
+        syncButton.type = "button";
+        syncButton.className = "solo-sync-button";
+        syncButton.textContent = "전적 동기화";
+        syncButton.addEventListener("click", () => syncSoloRecord(player, syncButton, status));
+
+        identity.append(riotId, recent);
+        stats.append(score, recordText);
+        sync.append(status, syncButton);
+        item.append(identity, stats, sync);
+        soloList.appendChild(item);
+    });
+}
+
+async function syncSoloRecord(player, button, status) {
+    button.disabled = true;
+    button.textContent = "불러오는 중";
+    status.textContent = "";
+
+    try {
+        const response = await fetch("/api/solo-record", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ puuid: player.puuid })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || "솔랭 전적을 불러오지 못했습니다.");
+        }
+
+        const next = SoloScore.applyMatches(soloRecords[player.puuid], data.matches);
+        const addedCount = next.addedWins + next.addedLosses;
+        soloRecords[player.puuid] = {
+            ...next,
+            puuid: player.puuid,
+            riotId: player.riotId,
+            syncedAt: new Date().toISOString(),
+            syncMessage: addedCount > 0
+                ? `새 경기 ${next.addedWins}승 ${next.addedLosses}패 반영`
+                : "새로 끝난 경기가 없습니다."
+        };
+        saveSoloRecords();
+        renderSoloRecords();
+    } catch (error) {
+        status.textContent = error.message;
+        status.classList.add("error");
+        button.disabled = false;
+        button.textContent = "다시 시도";
+    }
+}
+
+clearSoloBtn.addEventListener("click", () => {
+    if (!window.confirm("모든 솔랭 내기 기록을 삭제할까요?")) {
+        return;
+    }
+
+    soloRecords = {};
+    saveSoloRecords();
+    renderSoloRecords();
 });
 
 stakeInput.value = String(loadStake());
