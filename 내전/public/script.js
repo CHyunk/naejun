@@ -631,7 +631,11 @@ function recentSoloLabel(matches) {
         return "최근 전적 없음";
     }
 
-    return matches.map((match) => match.win ? "승" : "패").join(" · ");
+    return matches.map((match) => {
+        const champion = match.championName ? `${match.championName} ` : "";
+        const result = match.voided ? "무효" : match.win ? "승" : "패";
+        return `${champion}${result}`;
+    }).join(" · ");
 }
 
 function renderSoloRecords() {
@@ -658,7 +662,7 @@ function renderSoloRecords() {
         stats.className = "solo-stats";
         score.className = `solo-score ${record?.score > 0 ? "positive" : record?.score < 0 ? "negative" : "neutral"}`;
         score.textContent = formatSoloScore(record?.score || 0);
-        recordText.textContent = `${record?.wins || 0}승 ${record?.losses || 0}패`;
+        recordText.textContent = `${record?.wins || 0}승 ${record?.losses || 0}패 · ${record?.voids || 0}무효`;
         sync.className = "solo-sync";
         status.className = "solo-sync-status";
         status.textContent = record?.syncMessage || "";
@@ -693,14 +697,15 @@ async function syncSoloRecord(player, button, status) {
         }
 
         const next = SoloScore.applyMatches(soloRecords[player.puuid], data.matches);
-        const addedCount = next.addedWins + next.addedLosses;
+        const addedCount = next.addedWins + next.addedLosses + next.addedVoids;
+        const voidMessage = next.addedVoids > 0 ? ` · 연속 챔피언 ${next.addedVoids}경기 무효` : "";
         soloRecords[player.puuid] = {
             ...next,
             puuid: player.puuid,
             riotId: player.riotId,
             syncedAt: new Date().toISOString(),
             syncMessage: addedCount > 0
-                ? `새 경기 ${next.addedWins}승 ${next.addedLosses}패 반영`
+                ? `새 경기 ${next.addedWins}승 ${next.addedLosses}패 반영${voidMessage}`
                 : "새로 끝난 경기가 없습니다."
         };
         saveSoloRecords();
