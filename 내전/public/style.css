@@ -1282,3 +1282,401 @@ footer {
         gap: 9px;
     }
 }
+
+/* Compact match-control refresh. */
+:root {
+    --background: #0a0d0f;
+    --surface: #12171b;
+    --surface-raised: #192126;
+    --green: #22a861;
+    --green-bright: #35c778;
+    --green-deep: #101719;
+    --gold: #c8a657;
+    --gold-bright: #e4c977;
+    --gold-muted: #64583a;
+    --line: #283138;
+    --text: #f2f5f3;
+    --muted: #8f9ca4;
+    --blue: #5799f5;
+    --red: #ef6b73;
+    --success: #52d18b;
+    --danger: #ff7c82;
+}
+
+body {
+    background: #0a0d0f;
+    font-family: Pretendard, "Noto Sans KR", "Malgun Gothic", Arial, sans-serif;
+}
+
+.app-header {
+    min-height: 164px;
+    padding-block: 26px;
+    border-bottom: 1px solid #344039;
+    background: #101619;
+}
+
+.app-header::before,
+.app-header::after {
+    display: none;
+}
+
+.brand-lockup {
+    gap: 20px;
+}
+
+.brand-emblem {
+    width: 92px;
+    height: 92px;
+    filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.32));
+}
+
+.eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 7px;
+    color: #96a39e;
+    font-size: 0.68rem;
+}
+
+.eyebrow::before {
+    width: 18px;
+    height: 3px;
+    background: var(--green-bright);
+    content: "";
+}
+
+h1 {
+    margin-bottom: 0;
+    font-family: inherit;
+    font-size: 2.65rem;
+    font-weight: 900;
+    line-height: 1.08;
+}
+
+h2 {
+    font-size: 1.25rem;
+    font-weight: 850;
+}
+
+.player-count {
+    min-width: 104px;
+    padding-left: 26px;
+    border-left: 1px solid var(--line);
+}
+
+.player-count strong {
+    font-family: inherit;
+    font-size: 1.85rem;
+    font-weight: 900;
+}
+
+main,
+footer {
+    width: min(1120px, calc(100% - 48px));
+}
+
+section {
+    padding-block: 36px;
+}
+
+.step {
+    margin-bottom: 6px;
+    color: var(--green-bright);
+    font-size: 0.68rem;
+}
+
+.step::after {
+    width: 20px;
+    background: #476153;
+}
+
+.section-heading > p,
+.team-action p,
+.room-control-heading > p {
+    color: #849098;
+    font-size: 0.8rem;
+}
+
+.room-control {
+    padding-block: 28px;
+}
+
+.room-disconnected {
+    grid-template-columns: 170px auto minmax(0, 1fr);
+    margin-top: 20px;
+}
+
+.room-connected {
+    margin-top: 20px;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #11171a;
+}
+
+.room-code-badge strong {
+    color: var(--text);
+    font-size: 1.1rem;
+}
+
+.room-role {
+    border-color: rgba(53, 199, 120, 0.45);
+    background: rgba(34, 168, 97, 0.1);
+}
+
+input,
+select {
+    height: 46px;
+    border-color: #303a42;
+    border-radius: 6px;
+    background: #11171a;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--green-bright);
+    box-shadow: 0 0 0 3px rgba(53, 199, 120, 0.12);
+}
+
+.primary-button,
+.balance-button,
+.room-join-button,
+.room-utility-button,
+.winner-button,
+.solo-sync-button {
+    height: 46px;
+    border-radius: 6px;
+}
+
+.primary-button,
+.balance-button {
+    border-color: var(--green);
+    background: var(--green);
+    color: #07120c;
+}
+
+.primary-button:hover:not(:disabled),
+.balance-button:hover:not(:disabled) {
+    background: var(--green-bright);
+}
+
+.registration {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    align-items: end;
+    gap: 0 42px;
+}
+
+.registration .section-heading {
+    display: block;
+}
+
+.registration .section-heading > p {
+    margin: 8px 0 0;
+}
+
+.registration form {
+    margin-top: 0;
+}
+
+.registration > .message {
+    grid-column: 2;
+}
+
+.player-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1px;
+    margin-top: 20px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--line);
+}
+
+.player-list li,
+.player-list li:last-child {
+    min-height: 62px;
+    border: 0;
+    background: #11171a;
+}
+
+.player-list li:hover {
+    background: #161e22;
+}
+
+.score,
+.balance-summary,
+.match-count {
+    border-color: #4a493b;
+    border-radius: 4px;
+    background: rgba(200, 166, 87, 0.06);
+    color: #d9c584;
+}
+
+.team-action::before {
+    left: -16px;
+    width: 2px;
+}
+
+.team-action-controls {
+    grid-template-columns: 170px 220px;
+}
+
+.team-mode-switch {
+    border-radius: 6px;
+    background: #101518;
+}
+
+.mode-button {
+    border-radius: 4px;
+}
+
+.mode-button.active {
+    background: #25332c;
+    color: #6ee3a4;
+}
+
+.team-picker,
+.team,
+.money-panel,
+.solo-list {
+    border-radius: 6px;
+}
+
+.team-picker,
+.team {
+    overflow: hidden;
+    background: #11171a;
+}
+
+.team h3 {
+    font-family: inherit;
+    font-size: 0.92rem;
+}
+
+.winner-button,
+.solo-sync-button,
+.room-join-button,
+.room-utility-button {
+    background: #151c20;
+}
+
+.money-dashboard {
+    gap: 20px;
+}
+
+.money-panel {
+    padding: 0 16px 8px;
+    border: 1px solid var(--line);
+    border-top: 2px solid var(--green);
+    background: #101518;
+}
+
+.settlement-panel {
+    border-top-color: var(--gold);
+}
+
+.history-block {
+    padding-top: 20px;
+}
+
+.solo-list {
+    overflow: hidden;
+    border: 1px solid var(--line);
+}
+
+.solo-list li,
+.solo-list li:last-child {
+    min-height: 72px;
+    border-bottom: 1px solid var(--line);
+    background: #101518;
+}
+
+.solo-list li:last-child {
+    border-bottom: 0;
+}
+
+footer {
+    padding-top: 20px;
+    color: #707c83;
+}
+
+@media (max-width: 900px) {
+    .registration {
+        grid-template-columns: 1fr;
+        gap: 22px;
+    }
+
+    .registration > .message {
+        grid-column: 1;
+    }
+
+    .player-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 760px) {
+    .app-header {
+        min-height: 148px;
+        padding: 22px 20px;
+    }
+
+    .brand-emblem {
+        width: 74px;
+        height: 74px;
+    }
+
+    h1 {
+        font-size: 1.95rem;
+    }
+
+    .player-count {
+        right: 20px;
+        bottom: 20px;
+        padding-left: 0;
+        border-left: 0;
+    }
+
+    main,
+    footer {
+        width: min(100% - 28px, 1120px);
+    }
+
+    section {
+        padding-block: 30px;
+    }
+
+    .room-disconnected {
+        grid-template-columns: 1fr;
+    }
+
+    .team-action::before {
+        left: -8px;
+    }
+}
+
+@media (max-width: 430px) {
+    .brand-lockup {
+        gap: 12px;
+    }
+
+    .brand-emblem {
+        width: 64px;
+        height: 64px;
+    }
+
+    h1 {
+        font-size: 1.65rem;
+    }
+
+    .eyebrow {
+        font-size: 0.58rem;
+    }
+
+    .join-room-form {
+        grid-template-columns: minmax(0, 1fr) 78px;
+    }
+}
