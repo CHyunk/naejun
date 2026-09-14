@@ -2276,3 +2276,251 @@ footer {
         left: -16px;
     }
 }
+
+/* Airy section rhythm: separation without boxed-in panels. */
+html,
+body {
+    background: #ffffff;
+}
+
+.app-header {
+    min-height: 150px;
+    border-bottom-color: #e8eeeb;
+    box-shadow: none;
+}
+
+.brand-emblem {
+    width: 82px;
+    height: 82px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    filter: drop-shadow(0 7px 11px rgba(25, 74, 50, 0.13));
+}
+
+main {
+    width: 100%;
+    border: 0;
+    background: #ffffff;
+}
+
+section {
+    width: 100%;
+    padding: 48px max(32px, calc((100% - 1120px) / 2));
+    border-bottom: 0;
+    background: #ffffff;
+}
+
+section + section {
+    border-top: 1px solid #e8eeeb;
+}
+
+.room-control {
+    padding-block: 36px;
+    background: #f8fbf9;
+}
+
+.room-connected {
+    padding: 14px 16px;
+    border: 0;
+    border-left: 3px solid var(--green-bright);
+    border-radius: 0;
+    background: #eef8f2;
+    box-shadow: none;
+}
+
+.registration {
+    grid-template-columns: 270px minmax(0, 1fr);
+    gap: 0 56px;
+}
+
+.player-list {
+    gap: 0 36px;
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.player-list li,
+.player-list li:last-child {
+    padding-inline: 2px;
+    border-bottom: 1px solid #e5ebe8;
+    background: transparent;
+}
+
+.player-list li:nth-child(-n + 2) {
+    border-top: 1px solid #e5ebe8;
+}
+
+.player-list li:hover {
+    background: #f8fbf9;
+}
+
+.empty-state {
+    padding: 22px 20px;
+    border: 0;
+    border-left: 3px solid #c7ddd1;
+    border-radius: 0;
+    background: #f7faf8;
+    text-align: left;
+}
+
+.team-action::before {
+    display: none;
+}
+
+.manual-team-builder {
+    margin-top: 34px;
+    padding-top: 32px;
+}
+
+.manual-teams,
+.teams {
+    gap: 44px;
+}
+
+.team-picker,
+.team {
+    overflow: visible;
+    border: 0;
+    border-top: 2px solid;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.blue-picker header,
+.blue-team header,
+.red-picker header,
+.red-team header {
+    background: transparent;
+}
+
+.team-picker header,
+.team header {
+    padding-inline: 2px;
+}
+
+.team-slot,
+.team li {
+    padding-inline: 2px;
+}
+
+.team-slot select {
+    background: #fbfcfb;
+}
+
+.match-result-controls {
+    margin-top: 30px;
+    padding-top: 26px;
+}
+
+.money-dashboard {
+    gap: 48px;
+    margin-top: 30px;
+}
+
+.money-panel {
+    padding: 0;
+    border: 0;
+    border-top: 2px solid var(--green);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.settlement-panel {
+    border-top-color: var(--gold);
+}
+
+.ledger-list li,
+.settlement-list li {
+    padding-inline: 2px;
+}
+
+.history-block {
+    margin-top: 46px;
+    border-top-width: 1px;
+}
+
+.solo-list {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.solo-list li,
+.solo-list li:last-child {
+    padding-inline: 2px;
+    border-top: 0;
+    border-bottom: 1px solid #e5ebe8;
+    background: transparent;
+}
+
+.solo-list li:first-child {
+    border-top: 1px solid #e5ebe8;
+}
+
+.solo-list li:hover {
+    background: #f8fbf9;
+}
+
+footer {
+    width: min(1120px, calc(100% - 48px));
+    border-top: 1px solid #e8eeeb;
+}
+
+@media (max-width: 900px) {
+    .registration {
+        grid-template-columns: 1fr;
+        gap: 24px;
+    }
+
+    .player-list li:nth-child(2) {
+        border-top: 0;
+    }
+
+    .manual-teams,
+    .teams,
+    .money-dashboard {
+        gap: 30px;
+    }
+}
+
+@media (max-width: 760px) {
+    .app-header {
+        min-height: 138px;
+    }
+
+    .brand-emblem {
+        width: 68px;
+        height: 68px;
+    }
+
+    section {
+        padding: 36px 20px;
+    }
+
+    .room-control {
+        padding-block: 30px;
+    }
+}
+
+@media (max-width: 430px) {
+    .app-header {
+        min-height: 126px;
+    }
+
+    .brand-emblem {
+        width: 58px;
+        height: 58px;
+    }
+
+    section {
+        padding-inline: 16px;
+    }
+}
