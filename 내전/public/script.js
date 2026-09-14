@@ -1140,9 +1140,48 @@ function restoreActiveRoom() {
     }
 }
 
+function setupSectionNavigation() {
+    const links = Array.from(document.querySelectorAll(".app-nav a"));
+    const sections = links
+        .map((link) => document.querySelector(link.getAttribute("href")))
+        .filter(Boolean);
+
+    if (!links.length || !sections.length || !("IntersectionObserver" in window)) {
+        return;
+    }
+
+    const activate = (id) => {
+        links.forEach((link) => {
+            const isCurrent = link.getAttribute("href") === `#${id}`;
+            if (isCurrent) {
+                link.setAttribute("aria-current", "location");
+            } else {
+                link.removeAttribute("aria-current");
+            }
+        });
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        const visible = entries
+            .filter((entry) => entry.isIntersecting)
+            .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+        if (visible) {
+            activate(visible.target.id);
+        }
+    }, {
+        rootMargin: "-72px 0px -68% 0px",
+        threshold: [0, 0.2, 0.5]
+    });
+
+    sections.forEach((section) => observer.observe(section));
+    activate(sections[0].id);
+}
+
 stakeInput.value = String(loadStake());
 setWinnerButtons(false);
 renderPlayers();
 renderMoney();
 renderRoomControls();
 restoreActiveRoom();
+setupSectionNavigation();
