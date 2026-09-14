@@ -23,15 +23,18 @@
         </div>
     </header>
 
-    <nav class="app-nav" aria-label="내전 관리 메뉴">
-        <a href="#roomTitle">내전방</a>
-        <a href="#registrationTitle">플레이어</a>
-        <a href="#teamActionTitle">팀 편성</a>
-        <a href="#moneyTitle">판돈 정산</a>
-        <a href="#soloTitle">솔랭 내기</a>
-    </nav>
+    <div class="app-shell">
+        <aside class="app-sidebar">
+            <nav class="app-nav" aria-label="내전 관리 메뉴">
+                <a href="#roomTitle"><span>00</span>내전방</a>
+                <a href="#registrationTitle"><span>01</span>플레이어</a>
+                <a href="#teamActionTitle"><span>03</span>팀 편성</a>
+                <a href="#moneyTitle"><span>05</span>판돈 정산</a>
+                <a href="#soloTitle"><span>06</span>솔랭 내기</a>
+            </nav>
+        </aside>
 
-    <main>
+        <main>
         <section class="room-control" aria-labelledby="roomTitle">
             <div class="room-control-heading">
                 <div>
@@ -238,7 +241,8 @@
             <p id="soloEmpty" class="empty-state">참가자를 등록하면 최근 솔로랭크 전적을 불러올 수 있습니다.</p>
             <ul id="soloList" class="solo-list"></ul>
         </section>
-    </main>
+        </main>
+    </div>
 
     <footer>
         <span>비공식 교내 내전 도구</span>
