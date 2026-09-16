@@ -6,6 +6,7 @@ const initialState = {
     players: [{ puuid: "one", riotId: "나#KR1" }],
     matches: [],
     soloRecords: {},
+    soloChallenge: null,
     currentTeams: null,
     stake: 1000
 };
@@ -42,5 +43,25 @@ test("normalizes shared state and rejects oversized payloads", () => {
 
     assert.equal(normalized.players.length, 10);
     assert.equal(normalized.stake, 1000);
+    assert.equal(normalized.soloChallenge, null);
     assert.equal(oversized, null);
+});
+
+test("keeps a valid solo challenge timer in shared room state", () => {
+    const startedAt = 1_700_000_000_000;
+    const normalized = normalizeRoomState({
+        soloChallenge: {
+            durationHours: 8,
+            startedAt,
+            endsAt: startedAt + 8 * 60 * 60 * 1000,
+            endedManually: false
+        }
+    });
+
+    assert.deepEqual(normalized.soloChallenge, {
+        durationHours: 8,
+        startedAt,
+        endsAt: startedAt + 8 * 60 * 60 * 1000,
+        endedManually: false
+    });
 });

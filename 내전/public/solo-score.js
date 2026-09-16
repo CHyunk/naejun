@@ -11,6 +11,22 @@
         return typeof championName === "string" ? championName.trim().toLowerCase() : "";
     }
 
+    function filterMatchesByWindow(matches, startedAt, endsAt) {
+        const start = Number(startedAt);
+        const end = Number(endsAt);
+
+        if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) {
+            return [];
+        }
+
+        return (Array.isArray(matches) ? matches : []).filter((match) => {
+            const gameEndTimestamp = Number(match?.gameEndTimestamp);
+            return Number.isFinite(gameEndTimestamp)
+                && gameEndTimestamp >= start
+                && gameEndTimestamp <= end;
+        });
+    }
+
     function applyMatches(previous, matches) {
         const record = previous || {};
         const previousSeenIds = Array.isArray(record.seenMatchIds) ? record.seenMatchIds : [];
@@ -98,5 +114,5 @@
         };
     }
 
-    return { applyMatches };
+    return { applyMatches, filterMatchesByWindow };
 });

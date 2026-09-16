@@ -2,11 +2,13 @@ const STORAGE_KEY = "naejun-players-v1";
 const MATCH_STORAGE_KEY = "naejun-matches-v1";
 const STAKE_STORAGE_KEY = "naejun-stake-v1";
 const SOLO_STORAGE_KEY = "naejun-solo-records-v1";
+const SOLO_CHALLENGE_STORAGE_KEY = "naejun-solo-challenge-v1";
 const ACTIVE_ROOM_STORAGE_KEY = "naejun-active-room-v1";
 const ROOM_HOST_TOKENS_STORAGE_KEY = "naejun-room-host-tokens-v1";
 const MAX_PLAYERS = 10;
 const DEFAULT_STAKE = 1000;
 const ROOM_POLL_INTERVAL = 3000;
+const SOLO_CHALLENGE_DURATIONS = [8, 24];
 const TIER_NAMES = {
     IRON: "아이언",
     BRONZE: "브론즈",
@@ -62,6 +64,13 @@ const clearMatchesBtn = document.getElementById("clearMatchesBtn");
 const soloEmpty = document.getElementById("soloEmpty");
 const soloList = document.getElementById("soloList");
 const clearSoloBtn = document.getElementById("clearSoloBtn");
+const soloTimer = document.querySelector(".solo-timer");
+const soloTimerBadge = document.getElementById("soloTimerBadge");
+const soloTimerTitle = document.getElementById("soloTimerTitle");
+const soloTimerDetail = document.getElementById("soloTimerDetail");
+const soloDurationButtons = Array.from(document.querySelectorAll(".solo-duration-button"));
+const startSoloChallengeBtn = document.getElementById("startSoloChallengeBtn");
+const stopSoloChallengeBtn = document.getElementById("stopSoloChallengeBtn");
 const roomDisconnected = document.getElementById("roomDisconnected");
 const roomConnected = document.getElementById("roomConnected");
 const createRoomBtn = document.getElementById("createRoomBtn");
@@ -77,6 +86,8 @@ const roomMessage = document.getElementById("roomMessage");
 let players = loadPlayers();
 let matches = loadMatches();
 let soloRecords = loadSoloRecords();
+let soloChallenge = loadSoloChallenge();
+let selectedSoloDuration = soloChallenge?.durationHours || SOLO_CHALLENGE_DURATIONS[0];
 let currentTeams = null;
 let teamMode = "auto";
 let manualSelections = { blue: [], red: [] };
@@ -120,6 +131,43 @@ function loadSoloRecords() {
     }
 }
 
+function normalizeSoloChallenge(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return null;
+    }
+
+    const durationHours = Number(value.durationHours);
+    const startedAt = Number(value.startedAt);
+    const endsAt = Number(value.endsAt);
+    const maximumDuration = 7 * 24 * 60 * 60 * 1000;
+
+    if (!Number.isSafeInteger(durationHours)
+        || durationHours < 1
+        || durationHours > 168
+        || !Number.isFinite(startedAt)
+        || !Number.isFinite(endsAt)
+        || startedAt <= 0
+        || endsAt <= startedAt
+        || endsAt - startedAt > maximumDuration) {
+        return null;
+    }
+
+    return {
+        durationHours,
+        startedAt,
+        endsAt,
+        endedManually: Boolean(value.endedManually)
+    };
+}
+
+function loadSoloChallenge() {
+    try {
+        return normalizeSoloChallenge(JSON.parse(localStorage.getItem(SOLO_CHALLENGE_STORAGE_KEY)));
+    } catch {
+        return null;
+    }
+}
+
 function isValidMatch(match) {
     return match
         && Number.isSafeInteger(match.stake)
@@ -151,6 +199,17 @@ function saveMatches() {
 function saveSoloRecords() {
     if (!activeRoom) {
         localStorage.setItem(SOLO_STORAGE_KEY, JSON.stringify(soloRecords));
+    }
+    scheduleRoomSave();
+}
+
+function saveSoloChallenge() {
+    if (!activeRoom) {
+        if (soloChallenge) {
+            localStorage.setItem(SOLO_CHALLENGE_STORAGE_KEY, JSON.stringify(soloChallenge));
+        } else {
+            localStorage.removeItem(SOLO_CHALLENGE_STORAGE_KEY);
+        }
     }
     scheduleRoomSave();
 }
@@ -337,6 +396,7 @@ function renderPlayers() {
     createTeamBtn.disabled = players.length < 2 || players.length % 2 !== 0 || !canEditState();
     renderManualTeamBuilder();
     renderSoloRecords();
+    renderSoloChallenge();
 }
 
 function setLoading(isLoading) {
@@ -684,6 +744,126 @@ function recentSoloLabel(matches) {
     }).join(" · ");
 }
 
+function soloChallengePhase(now = Date.now()) {
+    if (!soloChallenge) {
+        return "idle";
+    }
+
+    return now < soloChallenge.endsAt ? "active" : "ended";
+}
+
+function formatSoloCountdown(milliseconds) {
+    const totalSeconds = Math.max(0, Math.ceil(milliseconds / 1000));
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return [hours, minutes, seconds].map((value) => String(value).padStart(2, "0")).join(":");
+}
+
+function formatSoloEndTime(timestamp) {
+    return new Intl.DateTimeFormat("ko-KR", {
+        month: "numeric",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+    }).format(new Date(timestamp));
+}
+
+function renderSoloChallenge() {
+    const now = Date.now();
+    const phase = soloChallengePhase(now);
+    const editable = canEditState();
+    const active = phase === "active";
+
+    soloTimer.classList.toggle("active", active);
+    soloTimer.classList.toggle("ended", phase === "ended");
+
+    if (phase === "idle") {
+        soloTimerBadge.textContent = "시작 전";
+        soloTimerTitle.textContent = "제한시간을 선택하세요";
+        soloTimerDetail.textContent = "내기를 시작한 뒤 끝난 솔랭 경기만 점수에 반영됩니다.";
+    } else if (active) {
+        soloTimerBadge.textContent = "진행 중";
+        soloTimerTitle.textContent = formatSoloCountdown(soloChallenge.endsAt - now);
+        soloTimerDetail.textContent = `${soloChallenge.durationHours}시간 내기 · ${formatSoloEndTime(soloChallenge.endsAt)} 종료`;
+    } else {
+        soloTimerBadge.textContent = "종료";
+        soloTimerTitle.textContent = "00:00:00";
+        soloTimerDetail.textContent = `${formatSoloEndTime(soloChallenge.endsAt)} 종료 · 제한시간 안에 끝난 경기만 최종 집계됩니다.`;
+    }
+
+    soloDurationButtons.forEach((button) => {
+        const duration = Number(button.dataset.hours);
+        const selected = duration === selectedSoloDuration;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-pressed", String(selected));
+        button.disabled = active || !editable;
+    });
+
+    startSoloChallengeBtn.textContent = phase === "ended" ? "새 내기 시작" : "내기 시작";
+    startSoloChallengeBtn.hidden = active;
+    startSoloChallengeBtn.disabled = active || players.length === 0 || !editable;
+    stopSoloChallengeBtn.hidden = !active;
+    stopSoloChallengeBtn.disabled = !editable;
+
+    document.querySelectorAll(".solo-sync-button").forEach((button) => {
+        if (button.dataset.loading !== "true") {
+            button.textContent = phase === "ended" ? "최종 집계" : "전적 동기화";
+            button.disabled = !soloChallenge || !editable;
+        }
+    });
+}
+
+soloDurationButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+        selectedSoloDuration = Number(button.dataset.hours);
+        renderSoloChallenge();
+    });
+});
+
+startSoloChallengeBtn.addEventListener("click", () => {
+    if (!players.length || soloChallengePhase() === "active" || !canEditState()) {
+        return;
+    }
+
+    if (Object.keys(soloRecords).length > 0
+        && !window.confirm("새 솔랭 내기를 시작하면 이전 솔랭 점수가 초기화됩니다. 계속할까요?")) {
+        return;
+    }
+
+    const startedAt = Date.now();
+    soloChallenge = {
+        durationHours: selectedSoloDuration,
+        startedAt,
+        endsAt: startedAt + selectedSoloDuration * 60 * 60 * 1000,
+        endedManually: false
+    };
+    soloRecords = {};
+    saveSoloRecords();
+    saveSoloChallenge();
+    renderSoloChallenge();
+    renderSoloRecords();
+});
+
+stopSoloChallengeBtn.addEventListener("click", () => {
+    if (soloChallengePhase() !== "active" || !canEditState()) {
+        return;
+    }
+
+    if (!window.confirm("솔랭 내기를 지금 종료할까요? 종료 이후 경기는 반영되지 않습니다.")) {
+        return;
+    }
+
+    soloChallenge = {
+        ...soloChallenge,
+        endsAt: Math.max(soloChallenge.startedAt + 1, Date.now()),
+        endedManually: true
+    };
+    saveSoloChallenge();
+    renderSoloChallenge();
+    renderSoloRecords();
+});
+
 function renderSoloRecords() {
     soloList.replaceChildren();
     soloEmpty.hidden = players.length > 0;
@@ -714,8 +894,8 @@ function renderSoloRecords() {
         status.textContent = record?.syncMessage || "";
         syncButton.type = "button";
         syncButton.className = "solo-sync-button";
-        syncButton.textContent = "전적 동기화";
-        syncButton.disabled = !canEditState();
+        syncButton.textContent = soloChallengePhase() === "ended" ? "최종 집계" : "전적 동기화";
+        syncButton.disabled = !soloChallenge || !canEditState();
         syncButton.addEventListener("click", () => syncSoloRecord(player, syncButton, status));
 
         identity.append(riotId, recent);
@@ -727,15 +907,27 @@ function renderSoloRecords() {
 }
 
 async function syncSoloRecord(player, button, status) {
+    if (!soloChallenge) {
+        status.textContent = "먼저 제한시간을 정하고 내기를 시작해 주세요.";
+        status.classList.add("error");
+        return;
+    }
+
     button.disabled = true;
+    button.dataset.loading = "true";
     button.textContent = "불러오는 중";
     status.textContent = "";
+    status.classList.remove("error");
 
     try {
         const response = await fetch("/api/solo-record", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ puuid: player.puuid })
+            body: JSON.stringify({
+                puuid: player.puuid,
+                startedAt: soloChallenge.startedAt,
+                endsAt: soloChallenge.endsAt
+            })
         });
         const data = await response.json();
 
@@ -743,7 +935,12 @@ async function syncSoloRecord(player, button, status) {
             throw new Error(data.message || "솔랭 전적을 불러오지 못했습니다.");
         }
 
-        const next = SoloScore.applyMatches(soloRecords[player.puuid], data.matches);
+        const eligibleMatches = SoloScore.filterMatchesByWindow(
+            data.matches,
+            soloChallenge.startedAt,
+            soloChallenge.endsAt
+        );
+        const next = SoloScore.applyMatches(soloRecords[player.puuid], eligibleMatches);
         const addedCount = next.addedWins + next.addedLosses + next.addedVoids;
         const voidMessage = next.addedVoids > 0 ? ` · 연속 챔피언 ${next.addedVoids}경기 무효` : "";
         soloRecords[player.puuid] = {
@@ -753,13 +950,16 @@ async function syncSoloRecord(player, button, status) {
             syncedAt: new Date().toISOString(),
             syncMessage: addedCount > 0
                 ? `새 경기 ${next.addedWins}승 ${next.addedLosses}패 반영${voidMessage}`
-                : "새로 끝난 경기가 없습니다."
+                : soloChallengePhase() === "ended"
+                    ? "제한시간 안에 추가로 끝난 경기가 없습니다."
+                    : "새로 끝난 경기가 없습니다."
         };
         saveSoloRecords();
         renderSoloRecords();
     } catch (error) {
         status.textContent = error.message;
         status.classList.add("error");
+        delete button.dataset.loading;
         button.disabled = false;
         button.textContent = "다시 시도";
     }
@@ -805,6 +1005,7 @@ function sharedRoomState() {
         players,
         matches,
         soloRecords,
+        soloChallenge,
         currentTeams,
         stake: readStake() || DEFAULT_STAKE
     };
@@ -822,6 +1023,7 @@ function applyRoomPermissions() {
     createTeamBtn.disabled = players.length < 2 || players.length % 2 !== 0 || !editable;
     confirmManualTeamBtn.disabled = !manualTeamsComplete() || !editable;
     setWinnerButtons(Boolean(currentTeams));
+    renderSoloChallenge();
 }
 
 function renderRoomControls() {
@@ -864,6 +1066,8 @@ function applySharedRoomState(state) {
     soloRecords = state?.soloRecords && typeof state.soloRecords === "object" && !Array.isArray(state.soloRecords)
         ? state.soloRecords
         : {};
+    soloChallenge = normalizeSoloChallenge(state?.soloChallenge);
+    selectedSoloDuration = soloChallenge?.durationHours || selectedSoloDuration;
     currentTeams = state?.currentTeams
         && Array.isArray(state.currentTeams.blue)
         && Array.isArray(state.currentTeams.red)
@@ -1119,6 +1323,8 @@ leaveRoomBtn.addEventListener("click", () => {
     players = loadPlayers();
     matches = loadMatches();
     soloRecords = loadSoloRecords();
+    soloChallenge = loadSoloChallenge();
+    selectedSoloDuration = soloChallenge?.durationHours || selectedSoloDuration;
     currentTeams = null;
     manualSelections = { blue: [], red: [] };
     stakeInput.value = String(loadStake());
@@ -1183,5 +1389,7 @@ setWinnerButtons(false);
 renderPlayers();
 renderMoney();
 renderRoomControls();
+renderSoloChallenge();
+window.setInterval(renderSoloChallenge, 1000);
 restoreActiveRoom();
 setupSectionNavigation();

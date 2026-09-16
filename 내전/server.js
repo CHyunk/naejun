@@ -136,6 +136,13 @@ app.post("/api/player", async function (req, res) {
 
 app.post("/api/solo-record", async function (req, res) {
     const puuid = typeof req.body?.puuid === "string" ? req.body.puuid.trim() : "";
+    const startedAt = Number(req.body?.startedAt);
+    const endsAt = Number(req.body?.endsAt);
+    const hasChallengeWindow = Number.isFinite(startedAt)
+        && Number.isFinite(endsAt)
+        && startedAt > 0
+        && endsAt > startedAt
+        && endsAt - startedAt <= 7 * 24 * 60 * 60 * 1000;
 
     if (!puuid || puuid.length > 128) {
         return res.status(400).json({ message: "올바른 플레이어 정보가 필요합니다." });
@@ -146,9 +153,13 @@ app.post("/api/solo-record", async function (req, res) {
     }
 
     try {
+        const queryEndsAt = Math.min(endsAt, Date.now());
+        const challengeQuery = hasChallengeWindow
+            ? `&startTime=${Math.floor(startedAt / 1000)}&endTime=${Math.ceil(queryEndsAt / 1000)}`
+            : "";
         const matchIdsUrl =
             `https://${RIOT_REGION}.api.riotgames.com/lol/match/v5/matches/by-puuid/` +
-            `${encodeURIComponent(puuid)}/ids?queue=420&start=0&count=10`;
+            `${encodeURIComponent(puuid)}/ids?queue=420&start=0&count=20${challengeQuery}`;
         const matchIds = await riotFetch(matchIdsUrl);
         const details = await Promise.all(
             matchIds.map((matchId) => {

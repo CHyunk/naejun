@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { applyMatches } = require("../public/solo-score");
+const { applyMatches, filterMatchesByWindow } = require("../public/solo-score");
 
 test("adds one point for a win and subtracts one for a loss", () => {
     const result = applyMatches(null, [
@@ -109,4 +109,27 @@ test("ignores malformed match results", () => {
 
     assert.equal(result.score, 0);
     assert.deepEqual(result.seenMatchIds, []);
+});
+
+test("keeps only matches that ended inside the challenge window", () => {
+    const startedAt = 1_000;
+    const endsAt = 5_000;
+    const matches = [
+        { matchId: "before", win: true, gameEndTimestamp: 999 },
+        { matchId: "start", win: true, gameEndTimestamp: 1_000 },
+        { matchId: "inside", win: false, gameEndTimestamp: 3_000 },
+        { matchId: "end", win: true, gameEndTimestamp: 5_000 },
+        { matchId: "after", win: false, gameEndTimestamp: 5_001 },
+        { matchId: "unknown", win: true }
+    ];
+
+    assert.deepEqual(
+        filterMatchesByWindow(matches, startedAt, endsAt).map((match) => match.matchId),
+        ["start", "inside", "end"]
+    );
+});
+
+test("rejects an invalid solo challenge window", () => {
+    assert.deepEqual(filterMatchesByWindow([], 5_000, 1_000), []);
+    assert.deepEqual(filterMatchesByWindow([{ gameEndTimestamp: 2_000 }], "bad", 3_000), []);
 });

@@ -9,6 +9,35 @@ function normalizeRoomCode(value) {
     return typeof value === "string" ? value.trim().toUpperCase() : "";
 }
 
+function normalizeSoloChallenge(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return null;
+    }
+
+    const durationHours = Number(value.durationHours);
+    const startedAt = Number(value.startedAt);
+    const endsAt = Number(value.endsAt);
+    const maximumDuration = 7 * 24 * 60 * 60 * 1000;
+
+    if (!Number.isSafeInteger(durationHours)
+        || durationHours < 1
+        || durationHours > 168
+        || !Number.isFinite(startedAt)
+        || !Number.isFinite(endsAt)
+        || startedAt <= 0
+        || endsAt <= startedAt
+        || endsAt - startedAt > maximumDuration) {
+        return null;
+    }
+
+    return {
+        durationHours,
+        startedAt,
+        endsAt,
+        endedManually: Boolean(value.endedManually)
+    };
+}
+
 function normalizeRoomState(value) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
         return null;
@@ -20,6 +49,7 @@ function normalizeRoomState(value) {
         soloRecords: value.soloRecords && typeof value.soloRecords === "object" && !Array.isArray(value.soloRecords)
             ? value.soloRecords
             : {},
+        soloChallenge: normalizeSoloChallenge(value.soloChallenge),
         currentTeams: value.currentTeams && typeof value.currentTeams === "object"
             ? value.currentTeams
             : null,
