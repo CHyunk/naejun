@@ -9,29 +9,29 @@
 })(typeof globalThis !== "undefined" ? globalThis : this, function () {
     const TIER_BASE_SCORE = {
         IRON: 0,
-        BRONZE: 100,
-        SILVER: 200,
-        GOLD: 300,
-        PLATINUM: 400,
-        EMERALD: 500,
-        DIAMOND: 600,
-        MASTER: 700,
-        GRANDMASTER: 800,
-        CHALLENGER: 900
+        BRONZE: 20,
+        SILVER: 40,
+        GOLD: 60,
+        PLATINUM: 80,
+        EMERALD: 100,
+        DIAMOND: 120,
+        MASTER: 140,
+        GRANDMASTER: 160,
+        CHALLENGER: 180
     };
 
-    const DIVISION_SCORE = { IV: 0, III: 25, II: 50, I: 75 };
+    const DIVISION_SCORE = { IV: 0, III: 5, II: 10, I: 15 };
 
     function rankedScore(entry) {
         if (!entry) {
-            return 150;
+            return 30;
         }
 
         const leaguePoints = Math.max(0, Math.min(Number(entry.leaguePoints) || 0, 100));
         return (
             (TIER_BASE_SCORE[entry.tier] || 0) +
             (DIVISION_SCORE[entry.rank || entry.division] || 0) +
-            Math.round(leaguePoints / 4)
+            Math.round(leaguePoints / 20)
         );
     }
 

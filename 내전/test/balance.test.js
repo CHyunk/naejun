@@ -8,10 +8,10 @@ function player(id, score) {
 
 test("creates equal-sized teams with the smallest possible score difference", () => {
     const players = [
-        player("a", 1000),
-        player("b", 900),
-        player("c", 600),
-        player("d", 500)
+        player("a", 200),
+        player("b", 180),
+        player("c", 120),
+        player("d", 100)
     ];
     const result = createBalancedTeams(players, () => 0);
 

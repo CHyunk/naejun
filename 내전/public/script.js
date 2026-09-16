@@ -1788,11 +1788,28 @@ function applySharedRoomState(state) {
     selectedPubgDuration = pubgChallenge?.durationHours || selectedPubgDuration;
     selectedPubgTargetKills = pubgChallenge?.targetKills || selectedPubgTargetKills;
     pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, state?.pubgTeams);
-    currentTeams = state?.currentTeams
-        && Array.isArray(state.currentTeams.blue)
-        && Array.isArray(state.currentTeams.red)
-        ? state.currentTeams
-        : null;
+    const savedTeams = state?.currentTeams;
+    if (savedTeams && Array.isArray(savedTeams.blue) && Array.isArray(savedTeams.red)) {
+        const playerById = new Map(players.map((player) => [player.puuid, player]));
+        const blue = savedTeams.blue.map((member) => playerById.get(member?.puuid));
+        const red = savedTeams.red.map((member) => playerById.get(member?.puuid));
+        if (blue.every(Boolean) && red.every(Boolean)) {
+            const blueScore = blue.reduce((sum, player) => sum + player.score, 0);
+            const redScore = red.reduce((sum, player) => sum + player.score, 0);
+            currentTeams = {
+                blue,
+                red,
+                blueScore,
+                redScore,
+                difference: Math.abs(blueScore - redScore),
+                isManual: Boolean(savedTeams.isManual)
+            };
+        } else {
+            currentTeams = null;
+        }
+    } else {
+        currentTeams = null;
+    }
     manualSelections = { blue: [], red: [] };
     stakeInput.value = String(
         Number.isSafeInteger(state?.stake) && state.stake >= 100 ? state.stake : DEFAULT_STAKE
