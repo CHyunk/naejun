@@ -38,6 +38,24 @@ function normalizeSoloChallenge(value) {
     };
 }
 
+function normalizePubgTeams(value) {
+    if (!value || typeof value !== "object" || Array.isArray(value)) {
+        return { blue: [], red: [] };
+    }
+
+    const used = new Set();
+    const normalizeTeam = (team) => (Array.isArray(value[team]) ? value[team].slice(0, 5) : [])
+        .filter((accountId) => {
+            if (typeof accountId !== "string" || !accountId || used.has(accountId)) {
+                return false;
+            }
+            used.add(accountId);
+            return true;
+        });
+
+    return { blue: normalizeTeam("blue"), red: normalizeTeam("red") };
+}
+
 function normalizeRoomState(value) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
         return null;
@@ -52,6 +70,7 @@ function normalizeRoomState(value) {
         soloChallenge: normalizeSoloChallenge(value.soloChallenge),
         pubgPlayers: Array.isArray(value.pubgPlayers) ? value.pubgPlayers.slice(0, 10) : [],
         pubgChallenge: normalizeSoloChallenge(value.pubgChallenge),
+        pubgTeams: normalizePubgTeams(value.pubgTeams),
         currentTeams: value.currentTeams && typeof value.currentTeams === "object"
             ? value.currentTeams
             : null,

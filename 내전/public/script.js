@@ -5,6 +5,7 @@ const SOLO_STORAGE_KEY = "naejun-solo-records-v1";
 const SOLO_CHALLENGE_STORAGE_KEY = "naejun-solo-challenge-v1";
 const PUBG_PLAYERS_STORAGE_KEY = "naejun-pubg-players-v1";
 const PUBG_CHALLENGE_STORAGE_KEY = "naejun-pubg-challenge-v1";
+const PUBG_TEAMS_STORAGE_KEY = "naejun-pubg-teams-v1";
 const ACTIVE_ROOM_STORAGE_KEY = "naejun-active-room-v1";
 const ROOM_HOST_TOKENS_STORAGE_KEY = "naejun-room-host-tokens-v1";
 const MAX_PLAYERS = 10;
@@ -81,6 +82,14 @@ const pubgPlayerNameInput = document.getElementById("pubgPlayerName");
 const addPubgPlayerBtn = document.getElementById("addPubgPlayerBtn");
 const pubgFormMessage = document.getElementById("pubgFormMessage");
 const clearPubgRecordsBtn = document.getElementById("clearPubgRecordsBtn");
+const randomizePubgTeamsBtn = document.getElementById("randomizePubgTeamsBtn");
+const pubgBlueTeamSlots = document.getElementById("pubgBlueTeamSlots");
+const pubgRedTeamSlots = document.getElementById("pubgRedTeamSlots");
+const pubgBlueTeamCount = document.getElementById("pubgBlueTeamCount");
+const pubgRedTeamCount = document.getElementById("pubgRedTeamCount");
+const pubgBlueTeamKills = document.getElementById("pubgBlueTeamKills");
+const pubgRedTeamKills = document.getElementById("pubgRedTeamKills");
+const pubgTeamMessage = document.getElementById("pubgTeamMessage");
 const pubgTimer = document.getElementById("pubgTimer");
 const pubgTimerBadge = document.getElementById("pubgTimerBadge");
 const pubgTimerTitle = document.getElementById("pubgTimerTitle");
@@ -112,6 +121,7 @@ let soloChallenge = loadSoloChallenge();
 let selectedSoloDuration = soloChallenge?.durationHours || DEFAULT_SOLO_CHALLENGE_DURATION;
 let pubgPlayers = loadPubgPlayers();
 let pubgChallenge = loadPubgChallenge();
+let pubgTeams = loadPubgTeams();
 let selectedPubgDuration = pubgChallenge?.durationHours || DEFAULT_SOLO_CHALLENGE_DURATION;
 let currentTeams = null;
 let teamMode = "auto";
@@ -123,6 +133,7 @@ let roomSaveTimer = null;
 let roomSaveInFlight = false;
 let roomSaveQueued = false;
 let pubgSyncInFlight = false;
+let lastPubgChallengePhase = pubgChallengePhase();
 
 function canEditState() {
     return !activeRoom || Boolean(activeRoom.hostToken);
@@ -222,6 +233,17 @@ function loadPubgChallenge() {
     }
 }
 
+function loadPubgTeams() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(PUBG_TEAMS_STORAGE_KEY));
+        return saved && typeof saved === "object" && !Array.isArray(saved)
+            ? saved
+            : { blue: [], red: [] };
+    } catch {
+        return { blue: [], red: [] };
+    }
+}
+
 function isValidMatch(match) {
     return match
         && Number.isSafeInteger(match.stake)
@@ -282,6 +304,13 @@ function savePubgChallenge() {
         } else {
             localStorage.removeItem(PUBG_CHALLENGE_STORAGE_KEY);
         }
+    }
+    scheduleRoomSave();
+}
+
+function savePubgTeams() {
+    if (!activeRoom) {
+        localStorage.setItem(PUBG_TEAMS_STORAGE_KEY, JSON.stringify(pubgTeams));
     }
     scheduleRoomSave();
 }
@@ -1098,6 +1127,91 @@ function resetPubgRecord(player) {
     };
 }
 
+function pubgTeamsComplete() {
+    return PubgTeam.teamsComplete(pubgPlayers, pubgTeams);
+}
+
+function pubgPlayerTeam(accountId) {
+    if (pubgTeams.blue.includes(accountId)) {
+        return "blue";
+    }
+    if (pubgTeams.red.includes(accountId)) {
+        return "red";
+    }
+    return "";
+}
+
+function createPubgTeamSlot(team, index) {
+    const label = document.createElement("label");
+    const slotName = document.createElement("span");
+    const select = document.createElement("select");
+    const emptyOption = document.createElement("option");
+    const currentValue = pubgTeams[team][index];
+    const selectedIds = new Set([...pubgTeams.blue, ...pubgTeams.red].filter(Boolean));
+
+    label.className = "team-slot";
+    slotName.textContent = `${index + 1}번`;
+    select.setAttribute("aria-label", `배그 ${team === "blue" ? "Blue" : "Red"} Team ${index + 1}번 플레이어`);
+    emptyOption.value = "";
+    emptyOption.textContent = "Steam 참가자 선택";
+    select.appendChild(emptyOption);
+
+    pubgPlayers.forEach((player) => {
+        const option = document.createElement("option");
+        option.value = player.accountId;
+        option.textContent = player.playerName;
+        option.disabled = selectedIds.has(player.accountId) && player.accountId !== currentValue;
+        select.appendChild(option);
+    });
+
+    select.value = currentValue;
+    select.disabled = pubgChallengePhase() === "active" || !canEditState();
+    select.addEventListener("change", () => {
+        pubgTeams[team][index] = select.value;
+        pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, pubgTeams);
+        savePubgTeams();
+        renderPubgPlayers();
+    });
+    label.append(slotName, select);
+    return label;
+}
+
+function renderPubgTeamBuilder() {
+    pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, pubgTeams);
+    pubgBlueTeamSlots.replaceChildren();
+    pubgRedTeamSlots.replaceChildren();
+
+    const teamSize = pubgTeams.blue.length;
+    const active = pubgChallengePhase() === "active";
+    const editable = canEditState();
+    const totals = PubgTeam.teamTotals(pubgPlayers, pubgTeams);
+    const complete = pubgTeamsComplete();
+
+    pubgBlueTeamKills.textContent = `${totals.blue}킬`;
+    pubgRedTeamKills.textContent = `${totals.red}킬`;
+    pubgBlueTeamCount.textContent = `${pubgTeams.blue.filter(Boolean).length} / ${teamSize}`;
+    pubgRedTeamCount.textContent = `${pubgTeams.red.filter(Boolean).length} / ${teamSize}`;
+    randomizePubgTeamsBtn.disabled = teamSize === 0 || active || !editable;
+
+    if (teamSize === 0) {
+        pubgTeamMessage.textContent = pubgPlayers.length % 2 === 1
+            ? "같은 인원의 두 팀을 만들려면 참가자를 짝수로 등록해 주세요."
+            : "Steam 참가자를 등록하면 팀 편성 칸이 열립니다.";
+        return;
+    }
+
+    pubgTeams.blue.forEach((_, index) => pubgBlueTeamSlots.appendChild(createPubgTeamSlot("blue", index)));
+    pubgTeams.red.forEach((_, index) => pubgRedTeamSlots.appendChild(createPubgTeamSlot("red", index)));
+
+    if (active) {
+        pubgTeamMessage.textContent = `킬내기 진행 중 · ${teamSize}대${teamSize} 팀 편성이 잠겼습니다.`;
+    } else if (complete) {
+        pubgTeamMessage.textContent = `Blue와 Red에 ${teamSize}명씩 편성했습니다.`;
+    } else {
+        pubgTeamMessage.textContent = `Blue와 Red에 ${teamSize}명씩 모든 참가자를 배정해 주세요.`;
+    }
+}
+
 function pubgRecentLabel(matches) {
     if (!Array.isArray(matches) || matches.length === 0) {
         return "집계된 경기가 없습니다.";
@@ -1151,6 +1265,7 @@ function renderPubgChallenge() {
     startPubgChallengeBtn.hidden = active;
     startPubgChallengeBtn.disabled = active
         || !pubgPlayers.length
+        || !pubgTeamsComplete()
         || !durationIsValid
         || !editable;
     stopPubgChallengeBtn.hidden = !active;
@@ -1160,6 +1275,7 @@ function renderPubgChallenge() {
 }
 
 function renderPubgPlayers() {
+    pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, pubgTeams);
     pubgList.replaceChildren();
     pubgEmpty.hidden = pubgPlayers.length > 0;
     clearPubgRecordsBtn.disabled = !pubgChallenge || !canEditState();
@@ -1173,7 +1289,9 @@ function renderPubgPlayers() {
         const item = document.createElement("li");
         const rank = document.createElement("strong");
         const identity = document.createElement("div");
+        const playerHeading = document.createElement("div");
         const playerName = document.createElement("strong");
+        const teamBadge = document.createElement("span");
         const recent = document.createElement("span");
         const kills = document.createElement("div");
         const killCount = document.createElement("strong");
@@ -1186,7 +1304,16 @@ function renderPubgPlayers() {
         rank.className = "pubg-rank";
         rank.textContent = `#${index + 1}`;
         identity.className = "pubg-identity";
+        playerHeading.className = "pubg-player-heading";
         playerName.textContent = player.playerName;
+        const team = pubgPlayerTeam(player.accountId);
+        if (team) {
+            teamBadge.className = `pubg-team-badge ${team}`;
+            teamBadge.textContent = team === "blue" ? "BLUE" : "RED";
+            playerHeading.append(playerName, teamBadge);
+        } else {
+            playerHeading.appendChild(playerName);
+        }
         recent.textContent = pubgRecentLabel(player.recentMatches);
         kills.className = "pubg-kills";
         killCount.textContent = `${Number(player.totalKills) || 0}킬`;
@@ -1204,21 +1331,27 @@ function renderPubgPlayers() {
         deleteButton.textContent = "×";
         deleteButton.title = "플레이어 삭제";
         deleteButton.setAttribute("aria-label", `${player.playerName} 삭제`);
-        deleteButton.disabled = !canEditState();
+        deleteButton.disabled = pubgChallengePhase() === "active" || !canEditState();
         deleteButton.addEventListener("click", () => {
+            if (pubgChallengePhase() === "active") {
+                return;
+            }
             pubgPlayers = pubgPlayers.filter((candidate) => candidate.accountId !== player.accountId);
+            pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, pubgTeams);
             savePubgPlayers();
+            savePubgTeams();
             renderPubgPlayers();
             renderPubgChallenge();
         });
 
-        identity.append(playerName, recent);
+        identity.append(playerHeading, recent);
         kills.append(killCount, gameCount);
         sync.append(syncStatus, syncButton, deleteButton);
         item.append(rank, identity, kills, sync);
         pubgList.appendChild(item);
     });
 
+    renderPubgTeamBuilder();
     renderPubgChallenge();
 }
 
@@ -1292,6 +1425,11 @@ pubgPlayerForm.addEventListener("submit", async (event) => {
     pubgFormMessage.textContent = "";
     pubgFormMessage.className = "message";
 
+    if (pubgChallengePhase() === "active") {
+        pubgFormMessage.textContent = "킬내기 진행 중에는 참가자를 변경할 수 없습니다.";
+        pubgFormMessage.classList.add("error");
+        return;
+    }
     if (pubgPlayers.length >= MAX_PLAYERS) {
         pubgFormMessage.textContent = "배그 킬내기 참가자는 최대 10명입니다.";
         pubgFormMessage.classList.add("error");
@@ -1323,7 +1461,9 @@ pubgPlayerForm.addEventListener("submit", async (event) => {
         }
 
         pubgPlayers.push(resetPubgRecord(data));
+        pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, pubgTeams);
         savePubgPlayers();
+        savePubgTeams();
         renderPubgPlayers();
         pubgPlayerForm.reset();
         pubgFormMessage.textContent = `${data.playerName} 님을 추가했습니다.`;
@@ -1332,9 +1472,10 @@ pubgPlayerForm.addEventListener("submit", async (event) => {
         pubgFormMessage.textContent = error.message;
         pubgFormMessage.classList.add("error");
     } finally {
-        addPubgPlayerBtn.disabled = !canEditState();
+        const rosterLocked = pubgChallengePhase() === "active" || !canEditState();
+        addPubgPlayerBtn.disabled = rosterLocked || pubgPlayers.length >= MAX_PLAYERS;
         addPubgPlayerBtn.textContent = "추가";
-        pubgPlayerNameInput.disabled = !canEditState();
+        pubgPlayerNameInput.disabled = rosterLocked;
     }
 });
 
@@ -1352,8 +1493,19 @@ pubgDurationInput.addEventListener("input", () => {
     renderPubgChallenge();
 });
 
+randomizePubgTeamsBtn.addEventListener("click", () => {
+    if (pubgChallengePhase() === "active" || !canEditState()) {
+        return;
+    }
+
+    pubgTeams = PubgTeam.randomizeTeams(pubgPlayers);
+    savePubgTeams();
+    renderPubgPlayers();
+});
+
 startPubgChallengeBtn.addEventListener("click", () => {
     if (!pubgPlayers.length
+        || !pubgTeamsComplete()
         || pubgChallengePhase() === "active"
         || !canEditState()
         || !isValidSoloDuration(selectedPubgDuration)) {
@@ -1375,6 +1527,7 @@ startPubgChallengeBtn.addEventListener("click", () => {
     savePubgPlayers();
     savePubgChallenge();
     renderPubgPlayers();
+    applyRoomPermissions();
 });
 
 stopPubgChallengeBtn.addEventListener("click", () => {
@@ -1392,6 +1545,7 @@ stopPubgChallengeBtn.addEventListener("click", () => {
     };
     savePubgChallenge();
     renderPubgPlayers();
+    applyRoomPermissions();
 });
 
 syncAllPubgBtn.addEventListener("click", () => syncPubgRecords());
@@ -1446,6 +1600,7 @@ function sharedRoomState() {
         soloChallenge,
         pubgPlayers,
         pubgChallenge,
+        pubgTeams,
         currentTeams,
         stake: readStake() || DEFAULT_STAKE
     };
@@ -1453,6 +1608,7 @@ function sharedRoomState() {
 
 function applyRoomPermissions() {
     const editable = canEditState();
+    const pubgRosterLocked = pubgChallengePhase() === "active" || !editable;
     gameNameInput.disabled = !editable;
     tagLineInput.disabled = !editable;
     addPlayerBtn.disabled = !editable;
@@ -1462,8 +1618,8 @@ function applyRoomPermissions() {
     stakeInput.disabled = !editable;
     createTeamBtn.disabled = players.length < 2 || players.length % 2 !== 0 || !editable;
     confirmManualTeamBtn.disabled = !manualTeamsComplete() || !editable;
-    pubgPlayerNameInput.disabled = !editable;
-    addPubgPlayerBtn.disabled = pubgPlayers.length >= MAX_PLAYERS || !editable;
+    pubgPlayerNameInput.disabled = pubgRosterLocked;
+    addPubgPlayerBtn.disabled = pubgPlayers.length >= MAX_PLAYERS || pubgRosterLocked;
     setWinnerButtons(Boolean(currentTeams));
     renderSoloChallenge();
     renderPubgChallenge();
@@ -1516,6 +1672,7 @@ function applySharedRoomState(state) {
         : [];
     pubgChallenge = normalizeSoloChallenge(state?.pubgChallenge);
     selectedPubgDuration = pubgChallenge?.durationHours || selectedPubgDuration;
+    pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, state?.pubgTeams);
     currentTeams = state?.currentTeams
         && Array.isArray(state.currentTeams.blue)
         && Array.isArray(state.currentTeams.red)
@@ -1777,6 +1934,7 @@ leaveRoomBtn.addEventListener("click", () => {
     pubgPlayers = loadPubgPlayers();
     pubgChallenge = loadPubgChallenge();
     selectedPubgDuration = pubgChallenge?.durationHours || selectedPubgDuration;
+    pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, loadPubgTeams());
     currentTeams = null;
     manualSelections = { blue: [], red: [] };
     stakeInput.value = String(loadStake());
@@ -1845,7 +2003,16 @@ renderRoomControls();
 renderSoloChallenge();
 renderPubgPlayers();
 window.setInterval(renderSoloChallenge, 1000);
-window.setInterval(renderPubgChallenge, 1000);
+window.setInterval(() => {
+    const phase = pubgChallengePhase();
+    if (phase !== lastPubgChallengePhase) {
+        lastPubgChallengePhase = phase;
+        renderPubgPlayers();
+        applyRoomPermissions();
+        return;
+    }
+    renderPubgChallenge();
+}, 1000);
 window.setInterval(autoSyncPubgRecords, PUBG_AUTO_SYNC_INTERVAL);
 restoreActiveRoom();
 setupSectionNavigation();

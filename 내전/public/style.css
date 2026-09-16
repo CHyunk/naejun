@@ -1368,6 +1368,94 @@ select:focus {
     margin: 0 0 0 4px;
 }
 
+.pubg-team-builder {
+    margin-top: 24px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+}
+
+.pubg-team-heading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 16px;
+}
+
+.pubg-team-heading h3,
+.pubg-team-heading p {
+    margin-bottom: 0;
+}
+
+.pubg-team-heading h3 {
+    font-size: 1rem;
+}
+
+.pubg-team-heading p {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 0.74rem;
+}
+
+.pubg-team-kicker {
+    color: var(--accent-strong);
+    font-size: 0.62rem;
+    font-weight: 900;
+}
+
+.pubg-team-heading .room-utility-button {
+    flex: 0 0 auto;
+    height: 40px;
+}
+
+.pubg-team-scoreboard {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 14px;
+}
+
+.pubg-team-score {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 0;
+    padding: 12px 14px;
+    border: 1px solid var(--line);
+    border-left: 3px solid;
+    border-radius: 6px;
+    background: var(--surface-soft);
+}
+
+.pubg-team-score.blue {
+    border-left-color: var(--blue);
+    background: var(--blue-soft);
+}
+
+.pubg-team-score.red {
+    border-left-color: var(--red);
+    background: var(--red-soft);
+}
+
+.pubg-team-score span {
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-weight: 900;
+}
+
+.pubg-team-score strong {
+    font-size: 1.05rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.pubg-manual-teams {
+    gap: 14px;
+}
+
+.pubg-team-message {
+    margin: 12px 0 0;
+}
+
 .pubg-timer {
     margin-top: 14px;
 }
@@ -1434,6 +1522,35 @@ select:focus {
 
 .pubg-list li:first-child .pubg-rank {
     color: var(--accent-strong);
+}
+
+.pubg-player-heading {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pubg-player-heading > strong {
+    min-width: 0;
+}
+
+.pubg-team-badge {
+    flex: 0 0 auto;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.58rem;
+    font-weight: 900;
+}
+
+.pubg-team-badge.blue {
+    background: var(--blue-soft);
+    color: #225fa8;
+}
+
+.pubg-team-badge.red {
+    background: var(--red-soft);
+    color: #b73d49;
 }
 
 .pubg-kills {
@@ -1756,6 +1873,15 @@ footer {
     .pubg-player-form .message {
         grid-column: 1 / -1;
         margin-left: 0;
+    }
+
+    .pubg-team-heading {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .pubg-team-heading .room-utility-button {
+        width: 100%;
     }
 
     .pubg-list li {

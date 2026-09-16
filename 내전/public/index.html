@@ -292,6 +292,44 @@
                 <p id="pubgFormMessage" class="message" role="status" aria-live="polite"></p>
             </form>
 
+            <div id="pubgTeamBuilder" class="pubg-team-builder" aria-labelledby="pubgTeamTitle">
+                <div class="pubg-team-heading">
+                    <div>
+                        <span class="pubg-team-kicker">TEAM SETUP</span>
+                        <h3 id="pubgTeamTitle">배그 팀 편성</h3>
+                        <p>8명을 등록하면 4대4가 되며, 다른 짝수 인원도 같은 수로 나눌 수 있습니다.</p>
+                    </div>
+                    <button id="randomizePubgTeamsBtn" class="room-utility-button" type="button" disabled>랜덤 배정</button>
+                </div>
+                <div class="pubg-team-scoreboard" aria-live="polite">
+                    <article class="pubg-team-score blue">
+                        <span>BLUE TEAM</span>
+                        <strong id="pubgBlueTeamKills">0킬</strong>
+                    </article>
+                    <article class="pubg-team-score red">
+                        <span>RED TEAM</span>
+                        <strong id="pubgRedTeamKills">0킬</strong>
+                    </article>
+                </div>
+                <div class="manual-teams pubg-manual-teams">
+                    <article class="team-picker blue-picker">
+                        <header>
+                            <h3>Blue Team</h3>
+                            <strong id="pubgBlueTeamCount">0 / 0</strong>
+                        </header>
+                        <div id="pubgBlueTeamSlots" class="team-slots"></div>
+                    </article>
+                    <article class="team-picker red-picker">
+                        <header>
+                            <h3>Red Team</h3>
+                            <strong id="pubgRedTeamCount">0 / 0</strong>
+                        </header>
+                        <div id="pubgRedTeamSlots" class="team-slots"></div>
+                    </article>
+                </div>
+                <p id="pubgTeamMessage" class="message pubg-team-message" role="status" aria-live="polite"></p>
+            </div>
+
             <div id="pubgTimer" class="solo-timer pubg-timer" aria-labelledby="pubgTimerTitle">
                 <div class="solo-timer-status">
                     <span id="pubgTimerBadge" class="solo-timer-badge">시작 전</span>
@@ -345,6 +383,7 @@
     <script src="/money.js"></script>
     <script src="/solo-score.js"></script>
     <script src="/pubg-kill.js"></script>
+    <script src="/pubg-team.js"></script>
     <script src="/script.js"></script>
 </body>
 </html>
