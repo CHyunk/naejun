@@ -1,7 +1,7 @@
 {
   "name": "naejun",
   "version": "1.0.0",
-  "description": "Riot ID와 솔로 랭크를 이용한 롤 내전 팀 밸런서",
+  "description": "롤 내전 팀 편성, 정산, 솔랭 및 배그 킬내기 관리 도구",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

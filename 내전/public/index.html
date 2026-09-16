@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#ffffff">
-    <title>연성중 롤 내전</title>
+    <title>연성중 내전</title>
     <link rel="icon" href="/assets/yeonsung-lol-emblem.png">
     <link rel="preload" href="/assets/PretendardVariable.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/style.css">
@@ -15,7 +15,7 @@
             <img class="brand-emblem" src="/assets/yeonsung-lol-emblem.png" alt="연성중과 League of Legends를 결합한 내전 엠블럼">
             <div class="brand-copy">
                 <p class="eyebrow">YEONSUNG MATCH CONTROL</p>
-                <h1>연성중 롤 내전</h1>
+                <h1>연성중 내전</h1>
             </div>
         </div>
         <div class="player-count" aria-live="polite">
@@ -32,6 +32,7 @@
                 <a href="#teamActionTitle"><span>03</span>팀 편성</a>
                 <a href="#moneyTitle"><span>05</span>판돈 정산</a>
                 <a href="#soloTitle"><span>06</span>솔랭 내기</a>
+                <a href="#pubgTitle"><span>07</span>배그 킬내기</a>
             </nav>
         </aside>
 
@@ -239,7 +240,7 @@
                 </div>
                 <button id="clearSoloBtn" class="text-button danger-text" type="button" disabled>솔랭 기록 초기화</button>
             </div>
-            <div class="solo-timer" aria-labelledby="soloTimerTitle">
+            <div id="soloTimer" class="solo-timer" aria-labelledby="soloTimerTitle">
                 <div class="solo-timer-status">
                     <span id="soloTimerBadge" class="solo-timer-badge">시작 전</span>
                     <strong id="soloTimerTitle">제한시간을 선택하세요</strong>
@@ -272,17 +273,78 @@
             <p id="soloEmpty" class="empty-state">참가자를 등록하면 최근 솔로랭크 전적을 불러올 수 있습니다.</p>
             <ul id="soloList" class="solo-list"></ul>
         </section>
+
+        <section class="pubg-section" aria-labelledby="pubgTitle">
+            <div class="section-heading compact pubg-heading">
+                <div>
+                    <p class="step">07</p>
+                    <h2 id="pubgTitle">배그 킬내기</h2>
+                </div>
+                <button id="clearPubgRecordsBtn" class="text-button danger-text" type="button" disabled>킬 기록 초기화</button>
+            </div>
+
+            <form id="pubgPlayerForm" class="pubg-player-form">
+                <label for="pubgPlayerName">
+                    <span>Steam 닉네임</span>
+                    <input id="pubgPlayerName" type="text" maxlength="32" autocomplete="off" placeholder="PUBG 닉네임" required>
+                </label>
+                <button id="addPubgPlayerBtn" class="primary-button" type="submit">추가</button>
+                <p id="pubgFormMessage" class="message" role="status" aria-live="polite"></p>
+            </form>
+
+            <div id="pubgTimer" class="solo-timer pubg-timer" aria-labelledby="pubgTimerTitle">
+                <div class="solo-timer-status">
+                    <span id="pubgTimerBadge" class="solo-timer-badge">시작 전</span>
+                    <strong id="pubgTimerTitle">킬내기 시간을 정하세요</strong>
+                    <span id="pubgTimerDetail">시작 이후 끝난 Steam 일반·경쟁전의 킬을 자동 집계합니다.</span>
+                </div>
+                <div class="solo-timer-controls">
+                    <div class="solo-duration-picker">
+                        <label class="solo-duration-field" for="pubgDurationInput">
+                            <span>제한시간</span>
+                            <span class="solo-duration-input-wrap">
+                                <input id="pubgDurationInput" type="number" min="1" max="100" step="1" value="8" inputmode="numeric" aria-describedby="pubgDurationHint">
+                                <span>시간</span>
+                            </span>
+                        </label>
+                        <div class="solo-duration-options" role="group" aria-label="배그 킬내기 빠른 시간 설정">
+                            <button class="solo-duration-button" type="button" data-hours="8" aria-pressed="true">8</button>
+                            <button class="solo-duration-button" type="button" data-hours="24" aria-pressed="false">24</button>
+                            <button class="solo-duration-button" type="button" data-hours="48" aria-pressed="false">48</button>
+                            <button class="solo-duration-button" type="button" data-hours="72" aria-pressed="false">72</button>
+                            <button class="solo-duration-button" type="button" data-hours="100" aria-pressed="false">100</button>
+                        </div>
+                        <span id="pubgDurationHint" class="solo-duration-hint">1~100시간</span>
+                    </div>
+                    <div class="solo-timer-actions">
+                        <button id="startPubgChallengeBtn" class="primary-button solo-start-button" type="button">킬내기 시작</button>
+                        <button id="stopPubgChallengeBtn" class="room-utility-button solo-stop-button" type="button" hidden>지금 종료</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pubg-toolbar">
+                <div>
+                    <strong>킬 순위</strong>
+                    <span id="pubgSyncMeta">5분마다 자동 동기화</span>
+                </div>
+                <button id="syncAllPubgBtn" class="room-utility-button" type="button" disabled>전체 전적 동기화</button>
+            </div>
+            <p id="pubgEmpty" class="empty-state">Steam 닉네임을 등록하면 킬 순위가 표시됩니다.</p>
+            <ol id="pubgList" class="pubg-list"></ol>
+        </section>
         </main>
     </div>
 
     <footer>
         <span>비공식 교내 내전 도구</span>
-        <span>Riot Games의 보증 또는 후원을 받지 않습니다.</span>
+        <span>Riot Games 또는 KRAFTON의 보증 및 후원을 받지 않습니다.</span>
     </footer>
     <script src="/rank-score.js"></script>
     <script src="/balance.js"></script>
     <script src="/money.js"></script>
     <script src="/solo-score.js"></script>
+    <script src="/pubg-kill.js"></script>
     <script src="/script.js"></script>
 </body>
 </html>

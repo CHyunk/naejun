@@ -7,6 +7,8 @@ const initialState = {
     matches: [],
     soloRecords: {},
     soloChallenge: null,
+    pubgPlayers: [],
+    pubgChallenge: null,
     currentTeams: null,
     stake: 1000
 };
@@ -44,6 +46,8 @@ test("normalizes shared state and rejects oversized payloads", () => {
     assert.equal(normalized.players.length, 10);
     assert.equal(normalized.stake, 1000);
     assert.equal(normalized.soloChallenge, null);
+    assert.deepEqual(normalized.pubgPlayers, []);
+    assert.equal(normalized.pubgChallenge, null);
     assert.equal(oversized, null);
 });
 
@@ -64,6 +68,32 @@ test("keeps a valid solo challenge timer in shared room state", () => {
         endsAt: startedAt + 8 * 60 * 60 * 1000,
         endedManually: false
     });
+});
+
+test("keeps PUBG kill records and challenge time in shared room state", () => {
+    const store = new RoomStore();
+    const startedAt = Date.now();
+    const state = {
+        ...initialState,
+        pubgPlayers: [{
+            accountId: "account.steam.player",
+            playerName: "SchoolPlayer",
+            totalKills: 7,
+            games: 3,
+            seenMatchIds: ["match-1"]
+        }],
+        pubgChallenge: {
+            durationHours: 24,
+            startedAt,
+            endsAt: startedAt + 24 * 60 * 60 * 1000,
+            endedManually: false
+        }
+    };
+
+    const created = store.create(state);
+
+    assert.equal(created.room.state.pubgPlayers[0].totalKills, 7);
+    assert.equal(created.room.state.pubgChallenge.durationHours, 24);
 });
 
 test("accepts up to 100 hours and rejects longer solo challenges", () => {

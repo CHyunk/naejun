@@ -479,7 +479,8 @@ select:focus {
 .room-join-button,
 .room-utility-button,
 .winner-button,
-.solo-sync-button {
+.solo-sync-button,
+.pubg-sync-button {
     height: 46px;
     border-radius: 7px;
     font-weight: 850;
@@ -507,7 +508,8 @@ select:focus {
 .room-join-button,
 .room-utility-button,
 .winner-button,
-.solo-sync-button {
+.solo-sync-button,
+.pubg-sync-button {
     border: 1px solid var(--line-strong);
     background: var(--surface);
     color: var(--ink-soft);
@@ -516,7 +518,8 @@ select:focus {
 
 .room-join-button:hover:not(:disabled),
 .room-utility-button:hover:not(:disabled),
-.solo-sync-button:hover:not(:disabled) {
+.solo-sync-button:hover:not(:disabled),
+.pubg-sync-button:hover:not(:disabled) {
     border-color: #aab4e3;
     background: #f7f8ff;
     color: var(--accent-strong);
@@ -529,6 +532,7 @@ select:focus {
 .winner-button:focus-visible,
 .mode-button:focus-visible,
 .solo-sync-button:focus-visible,
+.pubg-sync-button:focus-visible,
 .text-button:focus-visible,
 .delete-button:focus-visible {
     outline: 2px solid var(--accent);
@@ -591,7 +595,8 @@ select:focus {
 .ledger-list,
 .settlement-list,
 .match-history,
-.solo-list {
+.solo-list,
+.pubg-list {
     margin: 0;
     padding: 0;
     list-style: none;
@@ -626,7 +631,9 @@ select:focus {
 .player-details,
 .ledger-details,
 .solo-identity,
-.solo-stats {
+.solo-stats,
+.pubg-identity,
+.pubg-record {
     display: grid;
     gap: 3px;
     min-width: 0;
@@ -635,7 +642,8 @@ select:focus {
 .player-details strong,
 .team li strong,
 .ledger-details strong,
-.solo-identity strong {
+.solo-identity strong,
+.pubg-identity strong {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -1335,6 +1343,144 @@ select:focus {
     font-size: 0.75rem;
 }
 
+.pubg-player-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 420px) auto minmax(0, 1fr);
+    align-items: end;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.pubg-player-form label {
+    display: grid;
+    gap: 7px;
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 800;
+}
+
+.pubg-player-form .primary-button {
+    min-width: 84px;
+}
+
+.pubg-player-form .message {
+    align-self: center;
+    margin: 0 0 0 4px;
+}
+
+.pubg-timer {
+    margin-top: 14px;
+}
+
+.pubg-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 24px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--line-strong);
+}
+
+.pubg-toolbar > div {
+    display: grid;
+    gap: 3px;
+}
+
+.pubg-toolbar strong {
+    font-size: 0.86rem;
+}
+
+.pubg-toolbar span,
+.pubg-identity span,
+.pubg-record span,
+.pubg-sync-status {
+    color: var(--muted);
+    font-size: 0.72rem;
+}
+
+.pubg-toolbar .room-utility-button {
+    height: 40px;
+}
+
+.pubg-list {
+    counter-reset: pubg-rank;
+}
+
+.pubg-list li {
+    display: grid;
+    grid-template-columns: 42px minmax(0, 1fr) 110px minmax(210px, auto);
+    align-items: center;
+    gap: 18px;
+    min-height: 82px;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--line);
+    counter-increment: pubg-rank;
+    transition: background 150ms ease, box-shadow 150ms ease;
+}
+
+.pubg-list li:hover {
+    background: var(--surface-hover);
+    box-shadow: inset 3px 0 0 #c8cee9;
+}
+
+.pubg-rank {
+    color: var(--muted);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 850;
+    text-align: center;
+}
+
+.pubg-list li:first-child .pubg-rank {
+    color: var(--accent-strong);
+}
+
+.pubg-kills {
+    display: grid;
+    justify-items: end;
+    gap: 2px;
+}
+
+.pubg-kills strong {
+    color: var(--ink);
+    font-size: 1.35rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.pubg-kills span {
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 800;
+}
+
+.pubg-sync {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 92px 34px;
+    align-items: center;
+    gap: 8px;
+}
+
+.pubg-sync-button {
+    height: 40px;
+    font-size: 0.72rem;
+}
+
+.pubg-delete-button {
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    font-size: 1.15rem;
+}
+
+.pubg-delete-button:hover:not(:disabled) {
+    background: #fff0f1;
+    color: var(--danger);
+}
+
 footer {
     display: flex;
     justify-content: space-between;
@@ -1546,7 +1692,8 @@ footer {
     .manual-actions,
     .match-result-controls,
     .section-heading.money-heading,
-    .section-heading.solo-heading {
+    .section-heading.solo-heading,
+    .section-heading.pubg-heading {
         align-items: flex-start;
         flex-direction: column;
     }
@@ -1600,6 +1747,23 @@ footer {
 
     .solo-sync {
         grid-column: 1 / -1;
+    }
+
+    .pubg-player-form {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .pubg-player-form .message {
+        grid-column: 1 / -1;
+        margin-left: 0;
+    }
+
+    .pubg-list li {
+        grid-template-columns: 36px minmax(0, 1fr) auto;
+    }
+
+    .pubg-sync {
+        grid-column: 2 / -1;
     }
 
     footer {

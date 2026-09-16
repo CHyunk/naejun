@@ -50,6 +50,8 @@ function normalizeRoomState(value) {
             ? value.soloRecords
             : {},
         soloChallenge: normalizeSoloChallenge(value.soloChallenge),
+        pubgPlayers: Array.isArray(value.pubgPlayers) ? value.pubgPlayers.slice(0, 10) : [],
+        pubgChallenge: normalizeSoloChallenge(value.pubgChallenge),
         currentTeams: value.currentTeams && typeof value.currentTeams === "object"
             ? value.currentTeams
             : null,
