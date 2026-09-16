@@ -65,3 +65,24 @@ test("keeps a valid solo challenge timer in shared room state", () => {
         endedManually: false
     });
 });
+
+test("accepts up to 100 hours and rejects longer solo challenges", () => {
+    const startedAt = 1_700_000_000_000;
+    const maximum = normalizeRoomState({
+        soloChallenge: {
+            durationHours: 100,
+            startedAt,
+            endsAt: startedAt + 100 * 60 * 60 * 1000
+        }
+    });
+    const tooLong = normalizeRoomState({
+        soloChallenge: {
+            durationHours: 101,
+            startedAt,
+            endsAt: startedAt + 101 * 60 * 60 * 1000
+        }
+    });
+
+    assert.equal(maximum.soloChallenge.durationHours, 100);
+    assert.equal(tooLong.soloChallenge, null);
+});

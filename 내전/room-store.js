@@ -17,11 +17,11 @@ function normalizeSoloChallenge(value) {
     const durationHours = Number(value.durationHours);
     const startedAt = Number(value.startedAt);
     const endsAt = Number(value.endsAt);
-    const maximumDuration = 7 * 24 * 60 * 60 * 1000;
+    const maximumDuration = 100 * 60 * 60 * 1000;
 
     if (!Number.isSafeInteger(durationHours)
         || durationHours < 1
-        || durationHours > 168
+        || durationHours > 100
         || !Number.isFinite(startedAt)
         || !Number.isFinite(endsAt)
         || startedAt <= 0

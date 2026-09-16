@@ -8,7 +8,8 @@ const ROOM_HOST_TOKENS_STORAGE_KEY = "naejun-room-host-tokens-v1";
 const MAX_PLAYERS = 10;
 const DEFAULT_STAKE = 1000;
 const ROOM_POLL_INTERVAL = 3000;
-const SOLO_CHALLENGE_DURATIONS = [8, 24];
+const DEFAULT_SOLO_CHALLENGE_DURATION = 8;
+const MAX_SOLO_CHALLENGE_DURATION = 100;
 const TIER_NAMES = {
     IRON: "아이언",
     BRONZE: "브론즈",
@@ -68,6 +69,7 @@ const soloTimer = document.querySelector(".solo-timer");
 const soloTimerBadge = document.getElementById("soloTimerBadge");
 const soloTimerTitle = document.getElementById("soloTimerTitle");
 const soloTimerDetail = document.getElementById("soloTimerDetail");
+const soloDurationInput = document.getElementById("soloDurationInput");
 const soloDurationButtons = Array.from(document.querySelectorAll(".solo-duration-button"));
 const startSoloChallengeBtn = document.getElementById("startSoloChallengeBtn");
 const stopSoloChallengeBtn = document.getElementById("stopSoloChallengeBtn");
@@ -87,7 +89,7 @@ let players = loadPlayers();
 let matches = loadMatches();
 let soloRecords = loadSoloRecords();
 let soloChallenge = loadSoloChallenge();
-let selectedSoloDuration = soloChallenge?.durationHours || SOLO_CHALLENGE_DURATIONS[0];
+let selectedSoloDuration = soloChallenge?.durationHours || DEFAULT_SOLO_CHALLENGE_DURATION;
 let currentTeams = null;
 let teamMode = "auto";
 let manualSelections = { blue: [], red: [] };
@@ -139,11 +141,11 @@ function normalizeSoloChallenge(value) {
     const durationHours = Number(value.durationHours);
     const startedAt = Number(value.startedAt);
     const endsAt = Number(value.endsAt);
-    const maximumDuration = 7 * 24 * 60 * 60 * 1000;
+    const maximumDuration = MAX_SOLO_CHALLENGE_DURATION * 60 * 60 * 1000;
 
     if (!Number.isSafeInteger(durationHours)
         || durationHours < 1
-        || durationHours > 168
+        || durationHours > MAX_SOLO_CHALLENGE_DURATION
         || !Number.isFinite(startedAt)
         || !Number.isFinite(endsAt)
         || startedAt <= 0
@@ -769,11 +771,18 @@ function formatSoloEndTime(timestamp) {
     }).format(new Date(timestamp));
 }
 
+function isValidSoloDuration(value) {
+    return Number.isSafeInteger(value)
+        && value >= 1
+        && value <= MAX_SOLO_CHALLENGE_DURATION;
+}
+
 function renderSoloChallenge() {
     const now = Date.now();
     const phase = soloChallengePhase(now);
     const editable = canEditState();
     const active = phase === "active";
+    const durationIsValid = isValidSoloDuration(selectedSoloDuration);
 
     soloTimer.classList.toggle("active", active);
     soloTimer.classList.toggle("ended", phase === "ended");
@@ -792,6 +801,13 @@ function renderSoloChallenge() {
         soloTimerDetail.textContent = `${formatSoloEndTime(soloChallenge.endsAt)} 종료 · 제한시간 안에 끝난 경기만 최종 집계됩니다.`;
     }
 
+    if (document.activeElement !== soloDurationInput) {
+        soloDurationInput.value = durationIsValid ? String(selectedSoloDuration) : "";
+    }
+    soloDurationInput.disabled = active || !editable;
+    soloDurationInput.setAttribute("aria-invalid", String(!durationIsValid));
+    soloDurationInput.closest(".solo-duration-input-wrap").classList.toggle("invalid", !durationIsValid);
+
     soloDurationButtons.forEach((button) => {
         const duration = Number(button.dataset.hours);
         const selected = duration === selectedSoloDuration;
@@ -802,7 +818,7 @@ function renderSoloChallenge() {
 
     startSoloChallengeBtn.textContent = phase === "ended" ? "새 내기 시작" : "내기 시작";
     startSoloChallengeBtn.hidden = active;
-    startSoloChallengeBtn.disabled = active || players.length === 0 || !editable;
+    startSoloChallengeBtn.disabled = active || players.length === 0 || !editable || !durationIsValid;
     stopSoloChallengeBtn.hidden = !active;
     stopSoloChallengeBtn.disabled = !editable;
 
@@ -817,12 +833,28 @@ function renderSoloChallenge() {
 soloDurationButtons.forEach((button) => {
     button.addEventListener("click", () => {
         selectedSoloDuration = Number(button.dataset.hours);
+        soloDurationInput.value = String(selectedSoloDuration);
         renderSoloChallenge();
     });
 });
 
+soloDurationInput.addEventListener("input", () => {
+    const duration = soloDurationInput.valueAsNumber;
+    selectedSoloDuration = isValidSoloDuration(duration) ? duration : null;
+    renderSoloChallenge();
+});
+
+soloDurationInput.addEventListener("change", () => {
+    if (!isValidSoloDuration(selectedSoloDuration)) {
+        soloDurationInput.focus();
+    }
+});
+
 startSoloChallengeBtn.addEventListener("click", () => {
-    if (!players.length || soloChallengePhase() === "active" || !canEditState()) {
+    if (!players.length
+        || soloChallengePhase() === "active"
+        || !canEditState()
+        || !isValidSoloDuration(selectedSoloDuration)) {
         return;
     }
 

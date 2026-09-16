@@ -142,7 +142,7 @@ app.post("/api/solo-record", async function (req, res) {
         && Number.isFinite(endsAt)
         && startedAt > 0
         && endsAt > startedAt
-        && endsAt - startedAt <= 7 * 24 * 60 * 60 * 1000;
+        && endsAt - startedAt <= 100 * 60 * 60 * 1000;
 
     if (!puuid || puuid.length > 128) {
         return res.status(400).json({ message: "올바른 플레이어 정보가 필요합니다." });

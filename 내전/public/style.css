@@ -1085,9 +1085,8 @@ select:focus {
 
 .solo-timer {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 24px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
     margin-top: 20px;
     padding: 18px 20px;
     border: 1px solid var(--line);
@@ -1162,10 +1161,80 @@ select:focus {
 }
 
 .solo-timer-controls,
-.solo-duration-options {
+.solo-duration-picker,
+.solo-duration-options,
+.solo-timer-actions {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.solo-timer-controls {
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.solo-duration-picker {
+    flex-wrap: wrap;
+    min-width: 0;
+}
+
+.solo-duration-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.solo-duration-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 42px;
+    padding: 0 10px;
+    border: 1px solid var(--line-strong);
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--ink-soft);
+    box-shadow: var(--shadow-control);
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.solo-duration-input-wrap:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(64, 89, 216, 0.12);
+}
+
+.solo-duration-input-wrap.invalid {
+    border-color: #dc7b87;
+    box-shadow: 0 0 0 3px rgba(187, 45, 64, 0.09);
+}
+
+.solo-duration-input-wrap input {
+    width: 48px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    box-shadow: none;
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 850;
+}
+
+.solo-duration-input-wrap input:disabled {
+    color: var(--muted);
+}
+
+.solo-duration-input-wrap span {
+    font-size: 0.7rem;
+    font-weight: 800;
 }
 
 .solo-duration-options {
@@ -1176,7 +1245,7 @@ select:focus {
 }
 
 .solo-duration-button {
-    min-width: 68px;
+    min-width: 44px;
     height: 36px;
     padding: 0 12px;
     border: 0;
@@ -1186,6 +1255,12 @@ select:focus {
     font-size: 0.75rem;
     font-weight: 800;
     transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.solo-duration-hint {
+    color: var(--muted);
+    font-size: 0.68rem;
+    white-space: nowrap;
 }
 
 .solo-duration-button:hover:not(:disabled) {
@@ -1496,7 +1571,13 @@ footer {
     }
 
     .solo-timer-controls {
+        align-items: stretch;
+        flex-direction: column;
         flex-wrap: wrap;
+    }
+
+    .solo-duration-picker {
+        width: 100%;
     }
 
     .solo-duration-options {
@@ -1505,6 +1586,12 @@ footer {
 
     .solo-duration-button {
         flex: 1;
+    }
+
+    .solo-timer-actions,
+    .solo-start-button,
+    .solo-stop-button {
+        width: 100%;
     }
 
     .solo-list li {

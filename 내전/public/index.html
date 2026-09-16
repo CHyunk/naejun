@@ -246,12 +246,27 @@
                     <span id="soloTimerDetail">내기를 시작한 뒤 끝난 솔랭 경기만 점수에 반영됩니다.</span>
                 </div>
                 <div class="solo-timer-controls">
-                    <div class="solo-duration-options" role="group" aria-label="솔랭 내기 제한시간">
-                        <button class="solo-duration-button active" type="button" data-hours="8" aria-pressed="true">8시간</button>
-                        <button class="solo-duration-button" type="button" data-hours="24" aria-pressed="false">24시간</button>
+                    <div class="solo-duration-picker">
+                        <label class="solo-duration-field" for="soloDurationInput">
+                            <span>제한시간</span>
+                            <span class="solo-duration-input-wrap">
+                                <input id="soloDurationInput" type="number" min="1" max="100" step="1" value="8" inputmode="numeric" aria-describedby="soloDurationHint">
+                                <span>시간</span>
+                            </span>
+                        </label>
+                        <div class="solo-duration-options" role="group" aria-label="빠른 시간 설정">
+                            <button class="solo-duration-button active" type="button" data-hours="8" aria-pressed="true">8</button>
+                            <button class="solo-duration-button" type="button" data-hours="24" aria-pressed="false">24</button>
+                            <button class="solo-duration-button" type="button" data-hours="48" aria-pressed="false">48</button>
+                            <button class="solo-duration-button" type="button" data-hours="72" aria-pressed="false">72</button>
+                            <button class="solo-duration-button" type="button" data-hours="100" aria-pressed="false">100</button>
+                        </div>
+                        <span id="soloDurationHint" class="solo-duration-hint">1~100시간</span>
                     </div>
-                    <button id="startSoloChallengeBtn" class="primary-button solo-start-button" type="button">내기 시작</button>
-                    <button id="stopSoloChallengeBtn" class="room-utility-button solo-stop-button" type="button" hidden>지금 종료</button>
+                    <div class="solo-timer-actions">
+                        <button id="startSoloChallengeBtn" class="primary-button solo-start-button" type="button">내기 시작</button>
+                        <button id="stopSoloChallengeBtn" class="room-utility-button solo-stop-button" type="button" hidden>지금 종료</button>
+                    </div>
                 </div>
             </div>
             <p id="soloEmpty" class="empty-state">참가자를 등록하면 최근 솔로랭크 전적을 불러올 수 있습니다.</p>
