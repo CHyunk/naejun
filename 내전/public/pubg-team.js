@@ -87,5 +87,30 @@
         return { blue: total("blue"), red: total("red") };
     }
 
-    return { normalizeTeams, randomizeTeams, teamTotals, teamsComplete };
+    function resolveWinner(players, value, targetKills) {
+        const target = Number(targetKills);
+        if (!Number.isSafeInteger(target) || target < 1 || target > 1000) {
+            return null;
+        }
+
+        const totals = teamTotals(players, value);
+        const blueReached = totals.blue >= target;
+        const redReached = totals.red >= target;
+
+        if (!blueReached && !redReached) {
+            return null;
+        }
+        if (blueReached && !redReached) {
+            return "blue";
+        }
+        if (redReached && !blueReached) {
+            return "red";
+        }
+        if (totals.blue === totals.red) {
+            return "draw";
+        }
+        return totals.blue > totals.red ? "blue" : "red";
+    }
+
+    return { normalizeTeams, randomizeTeams, resolveWinner, teamTotals, teamsComplete };
 });

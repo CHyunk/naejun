@@ -1437,6 +1437,17 @@ select:focus {
     background: var(--red-soft);
 }
 
+.pubg-team-score.winner {
+    border-color: #d8b05e;
+    box-shadow: 0 0 0 2px rgba(167, 123, 41, 0.16);
+}
+
+.pubg-team-score > div {
+    display: grid;
+    gap: 2px;
+    min-width: 0;
+}
+
 .pubg-team-score span {
     color: var(--muted);
     font-size: 0.66rem;
@@ -1446,6 +1457,12 @@ select:focus {
 .pubg-team-score strong {
     font-size: 1.05rem;
     font-variant-numeric: tabular-nums;
+}
+
+.pubg-team-score small {
+    color: var(--muted);
+    font-size: 0.65rem;
+    font-weight: 750;
 }
 
 .pubg-manual-teams {
@@ -1458,6 +1475,18 @@ select:focus {
 
 .pubg-timer {
     margin-top: 14px;
+}
+
+.pubg-target-picker {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+
+.pubg-target-picker .solo-duration-input-wrap input {
+    width: 58px;
 }
 
 .pubg-toolbar {
@@ -1841,6 +1870,10 @@ footer {
     }
 
     .solo-duration-picker {
+        width: 100%;
+    }
+
+    .pubg-target-picker {
         width: 100%;
     }
 

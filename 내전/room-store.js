@@ -56,6 +56,24 @@ function normalizePubgTeams(value) {
     return { blue: normalizeTeam("blue"), red: normalizeTeam("red") };
 }
 
+function normalizePubgChallenge(value) {
+    const challenge = normalizeSoloChallenge(value);
+    if (!challenge) {
+        return null;
+    }
+
+    const targetKills = Number(value.targetKills);
+    const reachedAt = Number(value.reachedAt);
+    return {
+        ...challenge,
+        targetKills: Number.isSafeInteger(targetKills) && targetKills >= 1 && targetKills <= 1000
+            ? targetKills
+            : null,
+        winner: ["blue", "red", "draw"].includes(value.winner) ? value.winner : null,
+        reachedAt: Number.isFinite(reachedAt) && reachedAt > 0 ? reachedAt : null
+    };
+}
+
 function normalizeRoomState(value) {
     if (!value || typeof value !== "object" || Array.isArray(value)) {
         return null;
@@ -69,7 +87,7 @@ function normalizeRoomState(value) {
             : {},
         soloChallenge: normalizeSoloChallenge(value.soloChallenge),
         pubgPlayers: Array.isArray(value.pubgPlayers) ? value.pubgPlayers.slice(0, 10) : [],
-        pubgChallenge: normalizeSoloChallenge(value.pubgChallenge),
+        pubgChallenge: normalizePubgChallenge(value.pubgChallenge),
         pubgTeams: normalizePubgTeams(value.pubgTeams),
         currentTeams: value.currentTeams && typeof value.currentTeams === "object"
             ? value.currentTeams

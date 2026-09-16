@@ -88,7 +88,10 @@ test("keeps PUBG kill records and challenge time in shared room state", () => {
             durationHours: 24,
             startedAt,
             endsAt: startedAt + 24 * 60 * 60 * 1000,
-            endedManually: false
+            endedManually: false,
+            targetKills: 50,
+            winner: null,
+            reachedAt: null
         },
         pubgTeams: {
             blue: ["account.steam.player"],
@@ -100,6 +103,7 @@ test("keeps PUBG kill records and challenge time in shared room state", () => {
 
     assert.equal(created.room.state.pubgPlayers[0].totalKills, 7);
     assert.equal(created.room.state.pubgChallenge.durationHours, 24);
+    assert.equal(created.room.state.pubgChallenge.targetKills, 50);
     assert.deepEqual(created.room.state.pubgTeams, {
         blue: ["account.steam.player"],
         red: ["account.steam.friend"]

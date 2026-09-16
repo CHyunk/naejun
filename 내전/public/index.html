@@ -302,12 +302,18 @@
                     <button id="randomizePubgTeamsBtn" class="room-utility-button" type="button" disabled>랜덤 배정</button>
                 </div>
                 <div class="pubg-team-scoreboard" aria-live="polite">
-                    <article class="pubg-team-score blue">
-                        <span>BLUE TEAM</span>
+                    <article id="pubgBlueTeamScore" class="pubg-team-score blue">
+                        <div>
+                            <span>BLUE TEAM</span>
+                            <small id="pubgBlueTeamGoal">목표 설정 전</small>
+                        </div>
                         <strong id="pubgBlueTeamKills">0킬</strong>
                     </article>
-                    <article class="pubg-team-score red">
-                        <span>RED TEAM</span>
+                    <article id="pubgRedTeamScore" class="pubg-team-score red">
+                        <div>
+                            <span>RED TEAM</span>
+                            <small id="pubgRedTeamGoal">목표 설정 전</small>
+                        </div>
                         <strong id="pubgRedTeamKills">0킬</strong>
                     </article>
                 </div>
@@ -337,6 +343,16 @@
                     <span id="pubgTimerDetail">시작 이후 끝난 Steam 일반·경쟁전의 킬을 자동 집계합니다.</span>
                 </div>
                 <div class="solo-timer-controls">
+                    <div class="pubg-target-picker">
+                        <label class="solo-duration-field" for="pubgTargetKillsInput">
+                            <span>팀 목표</span>
+                            <span class="solo-duration-input-wrap">
+                                <input id="pubgTargetKillsInput" type="number" min="1" max="1000" step="1" value="50" inputmode="numeric" aria-describedby="pubgTargetKillsHint">
+                                <span>킬</span>
+                            </span>
+                        </label>
+                        <span id="pubgTargetKillsHint" class="solo-duration-hint">팀 합산 1~1,000킬</span>
+                    </div>
                     <div class="solo-duration-picker">
                         <label class="solo-duration-field" for="pubgDurationInput">
                             <span>제한시간</span>

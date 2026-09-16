@@ -6,6 +6,7 @@ const SOLO_CHALLENGE_STORAGE_KEY = "naejun-solo-challenge-v1";
 const PUBG_PLAYERS_STORAGE_KEY = "naejun-pubg-players-v1";
 const PUBG_CHALLENGE_STORAGE_KEY = "naejun-pubg-challenge-v1";
 const PUBG_TEAMS_STORAGE_KEY = "naejun-pubg-teams-v1";
+const PUBG_TARGET_STORAGE_KEY = "naejun-pubg-target-v1";
 const ACTIVE_ROOM_STORAGE_KEY = "naejun-active-room-v1";
 const ROOM_HOST_TOKENS_STORAGE_KEY = "naejun-room-host-tokens-v1";
 const MAX_PLAYERS = 10;
@@ -87,14 +88,19 @@ const pubgBlueTeamSlots = document.getElementById("pubgBlueTeamSlots");
 const pubgRedTeamSlots = document.getElementById("pubgRedTeamSlots");
 const pubgBlueTeamCount = document.getElementById("pubgBlueTeamCount");
 const pubgRedTeamCount = document.getElementById("pubgRedTeamCount");
+const pubgBlueTeamScore = document.getElementById("pubgBlueTeamScore");
+const pubgRedTeamScore = document.getElementById("pubgRedTeamScore");
 const pubgBlueTeamKills = document.getElementById("pubgBlueTeamKills");
 const pubgRedTeamKills = document.getElementById("pubgRedTeamKills");
+const pubgBlueTeamGoal = document.getElementById("pubgBlueTeamGoal");
+const pubgRedTeamGoal = document.getElementById("pubgRedTeamGoal");
 const pubgTeamMessage = document.getElementById("pubgTeamMessage");
 const pubgTimer = document.getElementById("pubgTimer");
 const pubgTimerBadge = document.getElementById("pubgTimerBadge");
 const pubgTimerTitle = document.getElementById("pubgTimerTitle");
 const pubgTimerDetail = document.getElementById("pubgTimerDetail");
 const pubgDurationInput = document.getElementById("pubgDurationInput");
+const pubgTargetKillsInput = document.getElementById("pubgTargetKillsInput");
 const pubgDurationButtons = Array.from(pubgTimer.querySelectorAll(".solo-duration-button"));
 const startPubgChallengeBtn = document.getElementById("startPubgChallengeBtn");
 const stopPubgChallengeBtn = document.getElementById("stopPubgChallengeBtn");
@@ -123,6 +129,7 @@ let pubgPlayers = loadPubgPlayers();
 let pubgChallenge = loadPubgChallenge();
 let pubgTeams = loadPubgTeams();
 let selectedPubgDuration = pubgChallenge?.durationHours || DEFAULT_SOLO_CHALLENGE_DURATION;
+let selectedPubgTargetKills = pubgChallenge?.targetKills || loadPubgTargetKills();
 let currentTeams = null;
 let teamMode = "auto";
 let manualSelections = { blue: [], red: [] };
@@ -227,10 +234,35 @@ function loadSoloChallenge() {
 
 function loadPubgChallenge() {
     try {
-        return normalizeSoloChallenge(JSON.parse(localStorage.getItem(PUBG_CHALLENGE_STORAGE_KEY)));
+        return normalizePubgChallenge(JSON.parse(localStorage.getItem(PUBG_CHALLENGE_STORAGE_KEY)));
     } catch {
         return null;
     }
+}
+
+function isValidPubgTargetKills(value) {
+    return Number.isSafeInteger(value) && value >= 1 && value <= 1000;
+}
+
+function normalizePubgChallenge(value) {
+    const challenge = normalizeSoloChallenge(value);
+    if (!challenge) {
+        return null;
+    }
+
+    const targetKills = Number(value.targetKills);
+    const reachedAt = Number(value.reachedAt);
+    return {
+        ...challenge,
+        targetKills: isValidPubgTargetKills(targetKills) ? targetKills : null,
+        winner: ["blue", "red", "draw"].includes(value.winner) ? value.winner : null,
+        reachedAt: Number.isFinite(reachedAt) && reachedAt > 0 ? reachedAt : null
+    };
+}
+
+function loadPubgTargetKills() {
+    const saved = Number(localStorage.getItem(PUBG_TARGET_STORAGE_KEY));
+    return isValidPubgTargetKills(saved) ? saved : 50;
 }
 
 function loadPubgTeams() {
@@ -313,6 +345,10 @@ function savePubgTeams() {
         localStorage.setItem(PUBG_TEAMS_STORAGE_KEY, JSON.stringify(pubgTeams));
     }
     scheduleRoomSave();
+}
+
+function savePubgTargetKills() {
+    localStorage.setItem(PUBG_TARGET_STORAGE_KEY, String(selectedPubgTargetKills));
 }
 
 function readStake() {
@@ -1186,9 +1222,28 @@ function renderPubgTeamBuilder() {
     const editable = canEditState();
     const totals = PubgTeam.teamTotals(pubgPlayers, pubgTeams);
     const complete = pubgTeamsComplete();
+    const targetKills = pubgChallenge?.targetKills || selectedPubgTargetKills;
+    const targetIsValid = isValidPubgTargetKills(targetKills);
+    const winner = pubgChallenge?.winner || null;
 
-    pubgBlueTeamKills.textContent = `${totals.blue}킬`;
-    pubgRedTeamKills.textContent = `${totals.red}킬`;
+    pubgBlueTeamKills.textContent = targetIsValid ? `${totals.blue} / ${targetKills}킬` : `${totals.blue}킬`;
+    pubgRedTeamKills.textContent = targetIsValid ? `${totals.red} / ${targetKills}킬` : `${totals.red}킬`;
+    pubgBlueTeamGoal.textContent = winner === "blue"
+        ? "목표 달성 · 승리"
+        : winner === "draw"
+            ? "동시 목표 달성"
+            : targetIsValid
+                ? `목표까지 ${Math.max(0, targetKills - totals.blue)}킬`
+                : "목표 설정 전";
+    pubgRedTeamGoal.textContent = winner === "red"
+        ? "목표 달성 · 승리"
+        : winner === "draw"
+            ? "동시 목표 달성"
+            : targetIsValid
+                ? `목표까지 ${Math.max(0, targetKills - totals.red)}킬`
+                : "목표 설정 전";
+    pubgBlueTeamScore.classList.toggle("winner", winner === "blue" || winner === "draw");
+    pubgRedTeamScore.classList.toggle("winner", winner === "red" || winner === "draw");
     pubgBlueTeamCount.textContent = `${pubgTeams.blue.filter(Boolean).length} / ${teamSize}`;
     pubgRedTeamCount.textContent = `${pubgTeams.red.filter(Boolean).length} / ${teamSize}`;
     randomizePubgTeamsBtn.disabled = teamSize === 0 || active || !editable;
@@ -1203,13 +1258,38 @@ function renderPubgTeamBuilder() {
     pubgTeams.blue.forEach((_, index) => pubgBlueTeamSlots.appendChild(createPubgTeamSlot("blue", index)));
     pubgTeams.red.forEach((_, index) => pubgRedTeamSlots.appendChild(createPubgTeamSlot("red", index)));
 
-    if (active) {
+    if (winner === "blue" || winner === "red") {
+        pubgTeamMessage.textContent = `${winner === "blue" ? "Blue" : "Red"} Team이 ${targetKills}킬 목표를 달성했습니다.`;
+    } else if (winner === "draw") {
+        pubgTeamMessage.textContent = `두 팀이 ${targetKills}킬 목표를 동시에 달성해 무승부입니다.`;
+    } else if (active) {
         pubgTeamMessage.textContent = `킬내기 진행 중 · ${teamSize}대${teamSize} 팀 편성이 잠겼습니다.`;
     } else if (complete) {
         pubgTeamMessage.textContent = `Blue와 Red에 ${teamSize}명씩 편성했습니다.`;
     } else {
         pubgTeamMessage.textContent = `Blue와 Red에 ${teamSize}명씩 모든 참가자를 배정해 주세요.`;
     }
+}
+
+function resolvePubgTargetWinner() {
+    if (!pubgChallenge || pubgChallenge.winner || !isValidPubgTargetKills(pubgChallenge.targetKills)) {
+        return false;
+    }
+
+    const winner = PubgTeam.resolveWinner(pubgPlayers, pubgTeams, pubgChallenge.targetKills);
+    if (!winner) {
+        return false;
+    }
+
+    const reachedAt = Math.min(Date.now(), pubgChallenge.endsAt);
+    pubgChallenge = {
+        ...pubgChallenge,
+        winner,
+        reachedAt,
+        endsAt: Math.min(pubgChallenge.endsAt, reachedAt)
+    };
+    savePubgChallenge();
+    return true;
 }
 
 function pubgRecentLabel(matches) {
@@ -1229,6 +1309,8 @@ function renderPubgChallenge() {
     const active = phase === "active";
     const editable = canEditState();
     const durationIsValid = isValidSoloDuration(selectedPubgDuration);
+    const targetIsValid = isValidPubgTargetKills(selectedPubgTargetKills);
+    const winner = pubgChallenge?.winner || null;
 
     pubgTimer.classList.toggle("active", active);
     pubgTimer.classList.toggle("ended", phase === "ended");
@@ -1236,11 +1318,19 @@ function renderPubgChallenge() {
     if (phase === "idle") {
         pubgTimerBadge.textContent = "시작 전";
         pubgTimerTitle.textContent = "킬내기 시간을 정하세요";
-        pubgTimerDetail.textContent = "시작 이후 끝난 Steam 일반·경쟁전의 킬을 자동 집계합니다.";
+        pubgTimerDetail.textContent = "팀 목표 킬과 제한시간을 정하면 Steam 전적을 자동 집계합니다.";
     } else if (active) {
         pubgTimerBadge.textContent = "진행 중";
         pubgTimerTitle.textContent = formatSoloCountdown(pubgChallenge.endsAt - now);
-        pubgTimerDetail.textContent = `${pubgChallenge.durationHours}시간 킬내기 · ${formatSoloEndTime(pubgChallenge.endsAt)} 종료`;
+        pubgTimerDetail.textContent = pubgChallenge.targetKills
+            ? `먼저 ${pubgChallenge.targetKills}킬 · ${formatSoloEndTime(pubgChallenge.endsAt)} 시간 종료`
+            : `${pubgChallenge.durationHours}시간 킬내기 · ${formatSoloEndTime(pubgChallenge.endsAt)} 종료`;
+    } else if (winner) {
+        pubgTimerBadge.textContent = winner === "draw" ? "무승부" : "목표 달성";
+        pubgTimerTitle.textContent = winner === "draw"
+            ? "동시 목표 달성"
+            : `${winner === "blue" ? "BLUE" : "RED"} TEAM 승리`;
+        pubgTimerDetail.textContent = `${pubgChallenge.targetKills}킬 목표 · ${formatSoloEndTime(pubgChallenge.reachedAt || pubgChallenge.endsAt)} 확정`;
     } else {
         pubgTimerBadge.textContent = "종료";
         pubgTimerTitle.textContent = "00:00:00";
@@ -1253,6 +1343,13 @@ function renderPubgChallenge() {
     pubgDurationInput.disabled = active || !editable;
     pubgDurationInput.setAttribute("aria-invalid", String(!durationIsValid));
     pubgDurationInput.closest(".solo-duration-input-wrap").classList.toggle("invalid", !durationIsValid);
+
+    if (document.activeElement !== pubgTargetKillsInput) {
+        pubgTargetKillsInput.value = targetIsValid ? String(selectedPubgTargetKills) : "";
+    }
+    pubgTargetKillsInput.disabled = active || !editable;
+    pubgTargetKillsInput.setAttribute("aria-invalid", String(!targetIsValid));
+    pubgTargetKillsInput.closest(".solo-duration-input-wrap").classList.toggle("invalid", !targetIsValid);
 
     pubgDurationButtons.forEach((button) => {
         const selected = Number(button.dataset.hours) === selectedPubgDuration;
@@ -1267,6 +1364,7 @@ function renderPubgChallenge() {
         || !pubgPlayers.length
         || !pubgTeamsComplete()
         || !durationIsValid
+        || !targetIsValid
         || !editable;
     stopPubgChallengeBtn.hidden = !active;
     stopPubgChallengeBtn.disabled = !editable;
@@ -1403,6 +1501,9 @@ async function syncPubgRecords(targetPlayers = pubgPlayers, quiet = false) {
             };
         });
         savePubgPlayers();
+        if (pubgPlayers.every((player) => targetIds.has(player.accountId))) {
+            resolvePubgTargetWinner();
+        }
         pubgSyncMeta.textContent = `마지막 동기화 ${new Intl.DateTimeFormat("ko-KR", {
             hour: "2-digit",
             minute: "2-digit"
@@ -1487,6 +1588,15 @@ pubgDurationButtons.forEach((button) => {
     });
 });
 
+pubgTargetKillsInput.addEventListener("input", () => {
+    const targetKills = pubgTargetKillsInput.valueAsNumber;
+    selectedPubgTargetKills = isValidPubgTargetKills(targetKills) ? targetKills : null;
+    if (selectedPubgTargetKills) {
+        savePubgTargetKills();
+    }
+    renderPubgPlayers();
+});
+
 pubgDurationInput.addEventListener("input", () => {
     const duration = pubgDurationInput.valueAsNumber;
     selectedPubgDuration = isValidSoloDuration(duration) ? duration : null;
@@ -1508,7 +1618,8 @@ startPubgChallengeBtn.addEventListener("click", () => {
         || !pubgTeamsComplete()
         || pubgChallengePhase() === "active"
         || !canEditState()
-        || !isValidSoloDuration(selectedPubgDuration)) {
+        || !isValidSoloDuration(selectedPubgDuration)
+        || !isValidPubgTargetKills(selectedPubgTargetKills)) {
         return;
     }
 
@@ -1521,7 +1632,10 @@ startPubgChallengeBtn.addEventListener("click", () => {
         durationHours: selectedPubgDuration,
         startedAt,
         endsAt: startedAt + selectedPubgDuration * 60 * 60 * 1000,
-        endedManually: false
+        endedManually: false,
+        targetKills: selectedPubgTargetKills,
+        winner: null,
+        reachedAt: null
     };
     pubgPlayers = pubgPlayers.map(resetPubgRecord);
     savePubgPlayers();
@@ -1670,8 +1784,9 @@ function applySharedRoomState(state) {
     pubgPlayers = Array.isArray(state?.pubgPlayers)
         ? state.pubgPlayers.filter(isValidPubgPlayer).slice(0, MAX_PLAYERS)
         : [];
-    pubgChallenge = normalizeSoloChallenge(state?.pubgChallenge);
+    pubgChallenge = normalizePubgChallenge(state?.pubgChallenge);
     selectedPubgDuration = pubgChallenge?.durationHours || selectedPubgDuration;
+    selectedPubgTargetKills = pubgChallenge?.targetKills || selectedPubgTargetKills;
     pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, state?.pubgTeams);
     currentTeams = state?.currentTeams
         && Array.isArray(state.currentTeams.blue)
@@ -1934,6 +2049,7 @@ leaveRoomBtn.addEventListener("click", () => {
     pubgPlayers = loadPubgPlayers();
     pubgChallenge = loadPubgChallenge();
     selectedPubgDuration = pubgChallenge?.durationHours || selectedPubgDuration;
+    selectedPubgTargetKills = pubgChallenge?.targetKills || loadPubgTargetKills();
     pubgTeams = PubgTeam.normalizeTeams(pubgPlayers, loadPubgTeams());
     currentTeams = null;
     manualSelections = { blue: [], red: [] };
