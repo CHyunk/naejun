@@ -207,8 +207,8 @@ app.post("/api/player", async function (req, res) {
         const summoner = await riotFetch(summonerUrl);
 
         const leagueUrl =
-            `https://${RIOT_PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-summoner/` +
-            encodeURIComponent(summoner.id);
+            `https://${RIOT_PLATFORM}.api.riotgames.com/lol/league/v4/entries/by-puuid/` +
+            encodeURIComponent(account.puuid);
         const leagueEntries = await riotFetch(leagueUrl);
         const soloRank = leagueEntries.find((entry) => entry.queueType === "RANKED_SOLO_5x5") || null;
 
