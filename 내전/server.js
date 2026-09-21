@@ -4,6 +4,7 @@ const path = require("node:path");
 const express = require("express");
 const { rankedScore } = require("./public/rank-score");
 const { RoomStore } = require("./room-store");
+const { FifaStore } = require("./fifa-store");
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -12,10 +13,27 @@ const RIOT_PLATFORM = (process.env.RIOT_PLATFORM || "kr").toLowerCase();
 const RIOT_REGION = (process.env.RIOT_REGION || "asia").toLowerCase();
 const PUBG_API_KEY = process.env.PUBG_API_KEY;
 const roomStore = new RoomStore();
+const fifaStore = new FifaStore({
+    filePath: process.env.FIFA_DATA_FILE
+        ? path.resolve(process.env.FIFA_DATA_FILE)
+        : path.join(__dirname, "data", "fifa.json")
+});
 const pubgMatchCache = new Map();
 
 app.use(express.json({ limit: "100kb" }));
 app.use(express.static(path.join(__dirname, "public")));
+
+app.get("/api/fifa", function (_req, res) {
+    const result = fifaStore.get();
+    return res.json(result.fifa);
+});
+
+app.put("/api/fifa", function (req, res) {
+    const result = fifaStore.update(req.body?.state, req.body?.expectedRevision);
+    return result.fifa
+        ? res.status(result.status).json({ ...result.fifa, message: result.message })
+        : res.status(result.status).json({ message: result.message });
+});
 
 app.post("/api/rooms", function (req, res) {
     const result = roomStore.create(req.body?.state);

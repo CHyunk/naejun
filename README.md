@@ -2,6 +2,8 @@
 
 롤 내전 팀 편성, 판돈 정산, 솔랭 승패 내기와 배그 스팀 킬내기를 한곳에서 관리하는 웹 앱입니다. 배그 킬내기는 경기 전적을 주기적으로 확인해 새로 끝난 경기의 킬을 자동으로 누적합니다.
 
+피파 교체혈전은 방 코드 없이 하나의 공용 등급표를 사용합니다. 누가 접속해도 같은 등급표와 경기 기록을 보며, 변경 사항은 서버에 즉시 저장되고 열려 있는 화면에도 자동으로 반영됩니다.
+
 공개 사이트: https://yeonsung-lol-naejun.airplch.chatgpt.site
 
 ## 실행 방법
@@ -20,6 +22,7 @@ RIOT_API_KEY=RGAPI-your-api-key
 RIOT_PLATFORM=kr
 RIOT_REGION=asia
 PUBG_API_KEY=your-pubg-api-key
+FIFA_DATA_FILE=./data/fifa.json
 PORT=3000
 ```
 
@@ -97,4 +100,5 @@ npm test
 | `RIOT_PLATFORM` | `kr` | 플랫폼 라우팅 값 |
 | `RIOT_REGION` | `asia` | 리전 라우팅 값 |
 | `PUBG_API_KEY` | 없음 | PUBG Steam 전적 조회 API 키, 필수 |
+| `FIFA_DATA_FILE` | `./data/fifa.json` | 공용 피파 등급표와 경기 기록 저장 파일 |
 | `PORT` | `3000` | 서버 포트 |

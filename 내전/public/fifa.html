@@ -1,1 +1,64 @@
-<!doctype html><html lang="ko"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>연성중 내전 · 피파 교체혈전</title><link rel="stylesheet" href="/fifa.css"></head><body><header class="top"><a class="brand" href="/index.html"><b>Y</b><span>연성중 내전</span></a><a class="back" href="/index.html">롤 · 배그로 돌아가기</a></header><div id="duelBanner" class="duel-banner" hidden></div><main><section class="hero"><p class="eyebrow">FIFA / REPLACEMENT BATTLE</p><h1>피파 <em>교체혈전</em></h1><p>바로 아래 등급의 선수가 위 등급에게 도전하고, 3판 2선 결과로 자리를 교체합니다.</p></section><section class="panel"><div class="panel-head"><span>01</span><div><h2>등급표</h2><p>선수를 등록한 뒤 각 등급에 배정하세요. 하위 4명은 같은 등급입니다.</p></div></div><form id="playerForm" class="add-form"><input id="playerName" placeholder="게임 닉네임" maxlength="24" required><button>선수 추가</button><button type="button" id="resetFifaBtn" class="ghost">초기화</button></form><p id="formMessage" class="message"></p><div id="rankBoard" class="rank-board"></div></section><section class="panel"><div class="panel-head"><span>02</span><div><h2>진행 중인 교체혈전</h2><p>현재 진행 중인 대결은 모든 참가자에게 상단 배너로 표시됩니다.</p></div></div><div id="duelList" class="duel-list"></div></section><section class="panel"><div class="panel-head"><span>03</span><div><h2>혈전 기록</h2><p id="historyCount"></p></div></div><div id="historyList" class="history-list"></div></section></main><dialog id="duelDialog"><div class="dialog-head"><div><p class="eyebrow">BEST OF 3</p><h2>교체혈전 기록</h2></div><button id="closeDialog" class="icon-btn" aria-label="닫기">×</button></div><div id="duelMatchup" class="matchup"></div><div id="gameList" class="games"></div><p id="duelMessage" class="message"></p><div class="dialog-actions"><button id="challengerWinBtn">도전자 승리</button><button id="defenderWinBtn" class="dark">방어자 승리</button><button id="finishDuelBtn" class="primary" disabled>결과 확정</button></div></dialog><script src="/fifa.js?v=1"></script></body></html>
+<!doctype html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>연성중 내전 · 피파 교체혈전</title>
+    <link rel="icon" href="/assets/yeonsung-lol-emblem.png">
+    <link rel="stylesheet" href="/fifa.css">
+    <link rel="stylesheet" href="/fifa-sync.css">
+</head>
+<body>
+    <header class="top">
+        <a class="brand" href="/index.html"><b>Y</b><span>연성중 내전</span></a>
+        <div class="top-actions">
+            <span id="syncStatus" class="sync-status" role="status" aria-live="polite">불러오는 중</span>
+            <a class="back" href="/index.html">롤 · 배그로 돌아가기</a>
+        </div>
+    </header>
+    <div id="duelBanner" class="duel-banner" hidden></div>
+    <main>
+        <section class="hero">
+            <p class="eyebrow">FIFA / REPLACEMENT BATTLE</p>
+            <h1>피파 <em>교체혈전</em></h1>
+            <p>모두가 같은 등급표를 보고 수정합니다. 변경 사항은 자동으로 저장됩니다.</p>
+        </section>
+        <section class="panel">
+            <div class="panel-head"><span>01</span><div><h2>등급표</h2><p>선수를 등록한 뒤 각 등급에 배정하세요. 한 선수는 한 자리에만 배정됩니다.</p></div></div>
+            <form id="playerForm" class="add-form">
+                <input id="playerName" placeholder="게임 닉네임" maxlength="24" required>
+                <button>선수 추가</button>
+                <button type="button" id="resetFifaBtn" class="ghost">전체 초기화</button>
+            </form>
+            <p id="formMessage" class="message" role="status"></p>
+            <div id="playerList" class="fifa-player-list"></div>
+            <div id="rankBoard" class="rank-board"></div>
+        </section>
+        <section class="panel">
+            <div class="panel-head"><span>02</span><div><h2>교체혈전</h2><p>바로 아래 등급의 선수가 위 등급에게 도전할 수 있습니다.</p></div></div>
+            <div id="duelList" class="duel-list"></div>
+        </section>
+        <section class="panel">
+            <div class="panel-head history-panel-head">
+                <span>03</span>
+                <div><h2>혈전 기록</h2><p id="historyCount"></p></div>
+                <button id="undoDuelBtn" class="secondary-action" type="button">마지막 경기 취소</button>
+            </div>
+            <div id="historyList" class="history-list"></div>
+        </section>
+    </main>
+    <dialog id="duelDialog">
+        <div class="dialog-head"><div><p class="eyebrow">BEST OF 3</p><h2>교체혈전 기록</h2></div><button id="closeDialog" class="icon-btn" aria-label="닫기">×</button></div>
+        <div id="duelMatchup" class="matchup"></div>
+        <div id="gameList" class="games"></div>
+        <p id="duelMessage" class="message"></p>
+        <div class="dialog-actions">
+            <button id="challengerWinBtn">도전자 2승</button>
+            <button id="defenderWinBtn" class="dark">방어자 2승</button>
+            <button id="cancelDuelBtn" class="danger">대결 취소</button>
+            <button id="finishDuelBtn" class="primary" disabled>결과 확정</button>
+        </div>
+    </dialog>
+    <script src="/fifa-shared.js?v=1"></script>
+</body>
+</html>

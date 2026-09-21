@@ -1,0 +1,4 @@
+내전/.env
+내전/data/*.json
+내전/data/*.tmp
+내전/node_modules/
