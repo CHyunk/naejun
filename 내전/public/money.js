@@ -97,5 +97,59 @@
         return settlements;
     }
 
-    return { calculateLedger, calculateSettlements };
+    function calculateMatchStats(matches) {
+        const players = new Map();
+        const pairs = new Map();
+
+        for (const match of Array.isArray(matches) ? matches : []) {
+            if (!match || !Number.isSafeInteger(match.stake) || match.stake <= 0
+                || !["blue", "red"].includes(match.winner)) {
+                continue;
+            }
+
+            for (const team of ["blue", "red"]) {
+                const members = Array.isArray(match[team])
+                    ? [...new Map(match[team]
+                        .filter((participant) => participant?.riotId)
+                        .map((participant) => [participantKey(participant), participant])).values()]
+                    : [];
+
+                for (const member of members) {
+                    const key = participantKey(member);
+                    const entry = players.get(key) || { key, riotId: member.riotId, played: 0, wins: 0, losses: 0 };
+                    entry.riotId = member.riotId;
+                    entry.played += 1;
+                    entry.wins += match.winner === team ? 1 : 0;
+                    entry.losses += match.winner === team ? 0 : 1;
+                    players.set(key, entry);
+                }
+
+                for (let first = 0; first < members.length; first += 1) {
+                    for (let second = first + 1; second < members.length; second += 1) {
+                        const sorted = [members[first], members[second]]
+                            .sort((left, right) => participantKey(left).localeCompare(participantKey(right)));
+                        const key = sorted.map(participantKey).join("|");
+                        const pair = pairs.get(key) || { first: sorted[0].riotId, second: sorted[1].riotId, played: 0 };
+                        pair.first = sorted[0].riotId;
+                        pair.second = sorted[1].riotId;
+                        pair.played += 1;
+                        pairs.set(key, pair);
+                    }
+                }
+            }
+        }
+
+        return {
+            players: [...players.values()]
+                .map((player) => ({ ...player, winRate: Math.round(player.wins / player.played * 100) }))
+                .sort((left, right) => right.played - left.played || right.winRate - left.winRate
+                    || left.riotId.localeCompare(right.riotId, "ko")),
+            pairs: [...pairs.values()]
+                .sort((left, right) => right.played - left.played
+                    || left.first.localeCompare(right.first, "ko")
+                    || left.second.localeCompare(right.second, "ko"))
+        };
+    }
+
+    return { calculateLedger, calculateSettlements, calculateMatchStats };
 });

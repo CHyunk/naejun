@@ -115,11 +115,21 @@ function hashHostToken(token) {
     return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+function createRecoveryCode() {
+    const code = Array.from({ length: 20 }, () => ROOM_CODE_CHARACTERS[crypto.randomInt(ROOM_CODE_CHARACTERS.length)]).join("");
+    return code.match(/.{1,5}/g).join("-");
+}
+
+function normalizeRecoveryCode(value) {
+    return typeof value === "string" ? value.replace(/[\s-]/g, "").toUpperCase() : "";
+}
+
 function publicRoom(room) {
     return {
         code: room.code,
         state: JSON.parse(JSON.stringify(room.state)),
         revision: room.revision,
+        hostGeneration: room.hostGeneration,
         updatedAt: new Date(room.updatedAt).toISOString()
     };
 }
@@ -142,10 +152,13 @@ class RoomStore {
         }
 
         const hostToken = crypto.randomBytes(24).toString("base64url");
+        const recoveryCode = createRecoveryCode();
         const now = Date.now();
         const room = {
             code,
             hostTokenHash: hashHostToken(hostToken),
+            recoveryCodeHash: hashHostToken(normalizeRecoveryCode(recoveryCode)),
+            hostGeneration: 1,
             state: normalizedState,
             revision: 1,
             createdAt: now,
@@ -153,7 +166,7 @@ class RoomStore {
         };
         this.rooms.set(code, room);
 
-        return { status: 201, hostToken, room: publicRoom(room) };
+        return { status: 201, hostToken, recoveryCode, room: publicRoom(room) };
     }
 
     get(code) {
@@ -204,6 +217,43 @@ class RoomStore {
         room.updatedAt = Date.now();
 
         return { status: 200, room: publicRoom(room) };
+    }
+
+    issueRecoveryCode(code, hostToken) {
+        const found = this.get(code);
+        if (!found.room) {
+            return found;
+        }
+        const room = this.rooms.get(found.room.code);
+        if (!hostToken || hashHostToken(hostToken) !== room.hostTokenHash) {
+            return { status: 403, message: "현재 방장만 코드를 만들 수 있습니다." };
+        }
+        const recoveryCode = createRecoveryCode();
+        room.recoveryCodeHash = hashHostToken(normalizeRecoveryCode(recoveryCode));
+        return { status: 200, recoveryCode };
+    }
+
+    claim(code, submittedCode) {
+        const recoveryCode = normalizeRecoveryCode(submittedCode);
+        if (recoveryCode.length !== 20 || [...recoveryCode].some((character) => !ROOM_CODE_CHARACTERS.includes(character))) {
+            return { status: 400, message: "올바른 방장 코드를 입력해 주세요." };
+        }
+        const found = this.get(code);
+        if (!found.room) {
+            return found;
+        }
+        const room = this.rooms.get(found.room.code);
+        if (!room.recoveryCodeHash || hashHostToken(recoveryCode) !== room.recoveryCodeHash) {
+            return { status: 403, message: "방장 코드가 맞지 않거나 이미 사용되었습니다." };
+        }
+        const hostToken = crypto.randomBytes(24).toString("base64url");
+        const nextRecoveryCode = createRecoveryCode();
+        room.hostTokenHash = hashHostToken(hostToken);
+        room.recoveryCodeHash = hashHostToken(normalizeRecoveryCode(nextRecoveryCode));
+        room.hostGeneration += 1;
+        room.revision += 1;
+        room.updatedAt = Date.now();
+        return { status: 200, hostToken, recoveryCode: nextRecoveryCode, room: publicRoom(room) };
     }
 }
 

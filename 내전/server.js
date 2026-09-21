@@ -24,7 +24,11 @@ app.post("/api/rooms", function (req, res) {
         return res.status(result.status).json({ message: result.message });
     }
 
-    return res.status(result.status).json({ ...result.room, hostToken: result.hostToken });
+    return res.status(result.status).json({
+        ...result.room,
+        hostToken: result.hostToken,
+        recoveryCode: result.recoveryCode
+    });
 });
 
 app.get("/api/rooms/:code", function (req, res) {
@@ -50,6 +54,22 @@ app.put("/api/rooms/:code", function (req, res) {
     }
 
     return res.status(result.status).json({ ...result.room, message: result.message });
+});
+
+app.post("/api/rooms/:code/recovery", function (req, res) {
+    const authorization = req.get("authorization") || "";
+    const hostToken = authorization.startsWith("Bearer ") ? authorization.slice(7) : "";
+    const result = roomStore.issueRecoveryCode(req.params.code, hostToken);
+    return result.recoveryCode
+        ? res.json({ recoveryCode: result.recoveryCode })
+        : res.status(result.status).json({ message: result.message });
+});
+
+app.post("/api/rooms/:code/claim", function (req, res) {
+    const result = roomStore.claim(req.params.code, req.body?.recoveryCode);
+    return result.room
+        ? res.json({ ...result.room, hostToken: result.hostToken, recoveryCode: result.recoveryCode })
+        : res.status(result.status).json({ message: result.message });
 });
 
 async function riotFetch(url) {

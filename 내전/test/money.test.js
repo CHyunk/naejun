@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { calculateLedger, calculateSettlements } = require("../public/money");
+const { calculateLedger, calculateSettlements, calculateMatchStats } = require("../public/money");
 
 const player = (name) => ({ puuid: name.toLowerCase(), riotId: `${name}#KR1` });
 
@@ -61,4 +61,26 @@ test("ignores malformed matches and returns no transfers for settled balances", 
 
     assert.deepEqual(ledger, []);
     assert.deepEqual(calculateSettlements([{ riotId: "Alpha#KR1", balance: 0 }]), []);
+});
+
+test("counts participation, win rates, and teammate appearances from match history", () => {
+    const alpha = player("Alpha");
+    const bravo = player("Bravo");
+    const charlie = player("Charlie");
+    const matches = [
+        { stake: 1000, winner: "blue", blue: [alpha, bravo], red: [charlie] },
+        { stake: 500, winner: "red", blue: [alpha, bravo], red: [charlie] }
+    ];
+    const stats = calculateMatchStats(matches);
+
+    assert.deepEqual(
+        stats.players.map(({ riotId, played, wins, losses, winRate }) => ({ riotId, played, wins, losses, winRate })),
+        [
+            { riotId: "Alpha#KR1", played: 2, wins: 1, losses: 1, winRate: 50 },
+            { riotId: "Bravo#KR1", played: 2, wins: 1, losses: 1, winRate: 50 },
+            { riotId: "Charlie#KR1", played: 2, wins: 1, losses: 1, winRate: 50 }
+        ]
+    );
+    assert.deepEqual(stats.pairs, [{ first: "Alpha#KR1", second: "Bravo#KR1", played: 2 }]);
+    assert.equal(calculateMatchStats([{ ...matches[0], winner: "red" }]).players[0].winRate, 0);
 });
